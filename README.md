@@ -8,6 +8,7 @@ A daily ear-training game in the style of Wordle: every day you hear two piano n
 - **Feedback**: 🟩 correct · 🟨 wrong but same family (perfect consonance, imperfect consonance, dissonance) · ⬛ wrong.
 - **Hints** after each miss: (1) hear the notes played together, (2) small vs. large interval, (3) the interval's family.
 - **After the game**: the answer is shown on a piano keyboard, and the interval buttons play each interval from the same starting note for comparison.
+- **Practice mode**: unlimited random intervals with the same rules, with its own score and streak (doesn't affect daily stats). Link straight to it with `#practice`.
 - **Stats and streaks** are stored in `localStorage`; results can be shared as an emoji grid.
 - The piano is synthesized with the Web Audio API — no audio files.
 
@@ -33,4 +34,6 @@ tests/           # node:test tests
 
 ## Deploying
 
-Any static host works. On GitHub Pages: *Settings → Pages → Deploy from a branch*, pick the branch and `/ (root)`.
+The site is served by GitHub Pages from the `gh-pages` branch: https://yalves.github.io/musicle/
+
+`.github/workflows/pages.yml` runs the tests on every push to the default branch and, if they pass, updates `gh-pages`, so the live site follows the default branch automatically.

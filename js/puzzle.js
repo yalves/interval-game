@@ -81,12 +81,20 @@ export function puzzleForDay(day) {
     previous = semitones;
   }
 
+  return { day, ...placeNotes(semitones, rand) };
+}
+
+// Random puzzle for practice mode, avoiding the previous interval.
+export function randomPuzzle(previous = null, rand = Math.random) {
+  const options = INTERVALS.map((i) => i.semitones).filter((s) => s !== previous);
+  return { day: null, ...placeNotes(options[Math.floor(rand() * options.length)], rand) };
+}
+
+function placeNotes(semitones, rand) {
   const ascending = rand() < 0.7;
   const low = LOWEST_NOTE + Math.floor(rand() * (HIGHEST_NOTE - semitones - LOWEST_NOTE + 1));
   const high = low + semitones;
-
   return {
-    day,
     semitones,
     ascending,
     first: ascending ? low : high,

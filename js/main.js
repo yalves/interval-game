@@ -9,6 +9,7 @@ import {
   isBlackKey,
   noteName,
   puzzleForDay,
+  randomPuzzle,
   shareText,
 } from './puzzle.js';
 import { playHarmonic, playMelodic } from './audio.js';
@@ -16,6 +17,7 @@ import { playHarmonic, playMelodic } from './audio.js';
 const STATE_KEY = 'musicle:state';
 const STATS_KEY = 'musicle:stats';
 const HELP_SEEN_KEY = 'musicle:help-seen';
+const PRACTICE_STATS_KEY = 'musicle:practice-stats';
 
 const storage = {
   get(key, fallback) {
@@ -38,8 +40,14 @@ const storage = {
 const $ = (selector) => document.querySelector(selector);
 
 const day = dayNumber();
-const puzzle = puzzleForDay(day);
-let guesses = loadGuesses();
+// The daily game and the practice game are kept side by side; `puzzle` and
+// `guesses` always point at the one in the active mode.
+const games = {
+  daily: { puzzle: puzzleForDay(day), guesses: loadGuesses() },
+  practice: { puzzle: randomPuzzle(), guesses: [] },
+};
+let mode = location.hash === '#practice' ? 'practice' : 'daily';
+let { puzzle, guesses } = games[mode];
 let selected = null;
 let comparing = null;
 
@@ -87,6 +95,23 @@ function recordResult() {
     stats.currentStreak = 0;
   }
   storage.set(STATS_KEY, stats);
+}
+
+function loadPracticeStats() {
+  return { played: 0, wins: 0, streak: 0, bestStreak: 0, ...storage.get(PRACTICE_STATS_KEY, {}) };
+}
+
+function recordPracticeResult() {
+  const stats = loadPracticeStats();
+  stats.played += 1;
+  if (status() === 'won') {
+    stats.wins += 1;
+    stats.streak += 1;
+    stats.bestStreak = Math.max(stats.bestStreak, stats.streak);
+  } else {
+    stats.streak = 0;
+  }
+  storage.set(PRACTICE_STATS_KEY, stats);
 }
 
 function renderStats() {
@@ -148,12 +173,14 @@ function onIntervalClick(semitones) {
 function submitGuess() {
   if (selected === null || status() !== 'playing') return;
   guesses = [...guesses, selected];
+  games[mode].guesses = guesses;
   selected = null;
-  storage.set(STATE_KEY, { day, guesses });
+  if (mode === 'daily') storage.set(STATE_KEY, { day, guesses });
 
   const result = evaluateGuess(puzzle, guesses.at(-1));
   if (status() !== 'playing') {
-    recordResult();
+    if (mode === 'daily') recordResult();
+    else recordPracticeResult();
     render();
     playMelodic(puzzle.first, puzzle.second);
     $('#result').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -167,7 +194,15 @@ function render() {
   const current = status();
   const over = current !== 'playing';
 
-  $('#day-label').textContent = `#${day}`;
+  for (const tab of document.querySelectorAll('[data-mode]')) {
+    tab.setAttribute('aria-selected', String(tab.dataset.mode === mode));
+  }
+  $('#day-label').textContent = mode === 'daily' ? `#${day}` : 'Practice';
+  $('#practice-stats').hidden = mode !== 'practice';
+  if (mode === 'practice') {
+    const stats = loadPracticeStats();
+    $('#practice-stats').textContent = `${stats.wins}/${stats.played} correct · Streak ${stats.streak} · Best ${stats.bestStreak}`;
+  }
   $('#play-harmonic').disabled = !over && misses() < 1;
 
   $('#attempts').innerHTML = Array.from({ length: MAX_ATTEMPTS }, (_, i) => {
@@ -194,6 +229,9 @@ function render() {
   confirm.textContent = selected === null ? 'Pick an interval' : `Submit: ${intervalBySemitones(selected).name}`;
 
   $('#result').hidden = !over;
+  $('#share-button').hidden = mode !== 'daily';
+  $('#countdown-box').hidden = mode !== 'daily';
+  $('#next-button').hidden = mode !== 'practice';
   if (over) {
     const interval = intervalBySemitones(puzzle.semitones);
     $('#result-title').textContent =
@@ -256,6 +294,35 @@ function setupAudioButtons() {
   });
 }
 
+// Modes
+
+function setMode(next) {
+  if (next === mode) return;
+  if (next === 'daily' && dayNumber() !== day) {
+    // A new day started while practicing: reload to get the new puzzle.
+    location.replace(`${location.pathname}${location.search}`);
+    return;
+  }
+  mode = next;
+  ({ puzzle, guesses } = games[mode]);
+  selected = null;
+  comparing = null;
+  $('#toast').hidden = true;
+  history.replaceState(null, '', mode === 'practice' ? '#practice' : `${location.pathname}${location.search}`);
+  render();
+}
+
+function nextPracticePuzzle() {
+  games.practice = { puzzle: randomPuzzle(puzzle.semitones), guesses: [] };
+  ({ puzzle, guesses } = games.practice);
+  selected = null;
+  comparing = null;
+  $('#toast').hidden = true;
+  render();
+  $('#play-melodic').click();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 // Sharing, countdown, modals and toast
 
 async function share() {
@@ -279,7 +346,7 @@ async function share() {
 
 function startCountdown() {
   const update = () => {
-    if (dayNumber() !== day) {
+    if (dayNumber() !== day && mode === 'daily') {
       location.reload();
       return;
     }
@@ -327,7 +394,8 @@ function setupKeyboardShortcuts() {
       event.preventDefault();
       $('#play-melodic').click();
     } else if (event.key === 'Enter') {
-      submitGuess();
+      if (mode === 'practice' && status() !== 'playing') nextPracticePuzzle();
+      else submitGuess();
     }
   });
 }
@@ -338,5 +406,10 @@ setupModals();
 setupKeyboardShortcuts();
 $('#confirm-button').addEventListener('click', submitGuess);
 $('#share-button').addEventListener('click', share);
+$('#next-button').addEventListener('click', nextPracticePuzzle);
+for (const tab of document.querySelectorAll('[data-mode]')) {
+  tab.addEventListener('click', () => setMode(tab.dataset.mode));
+}
+window.addEventListener('hashchange', () => setMode(location.hash === '#practice' ? 'practice' : 'daily'));
 startCountdown();
 render();

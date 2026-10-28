@@ -11,6 +11,7 @@ import {
   hintsFor,
   noteName,
   puzzleForDay,
+  randomPuzzle,
   shareText,
 } from '../js/puzzle.js';
 
@@ -63,4 +64,15 @@ test('noteName uses scientific pitch notation', () => {
   assert.equal(noteName(60), 'C4');
   assert.equal(noteName(69), 'A4');
   assert.equal(noteName(70), 'A♯4');
+});
+
+test('randomPuzzle avoids the previous interval and stays in range', () => {
+  for (let i = 0; i < 500; i++) {
+    const puzzle = randomPuzzle(7);
+    assert.notEqual(puzzle.semitones, 7);
+    assert.equal(Math.abs(puzzle.second - puzzle.first), puzzle.semitones);
+    for (const note of [puzzle.first, puzzle.second]) {
+      assert.ok(note >= LOWEST_NOTE && note <= HIGHEST_NOTE);
+    }
+  }
 });

@@ -20,7 +20,13 @@
     </header>
 
     <main class="game">
+      <nav class="modes" role="tablist" aria-label="Game mode">
+        <button role="tab" data-mode="daily" aria-selected="true">Daily</button>
+        <button role="tab" data-mode="practice" aria-selected="false">Practice</button>
+      </nav>
+
       <p class="subtitle"><span id="day-label">#1</span> · What's the interval between the two notes?</p>
+      <p class="practice-stats" id="practice-stats" hidden></p>
 
       <section class="listen">
         <button class="play-button" id="play-melodic">
@@ -44,7 +50,8 @@
         <p class="result-tip">Tap the intervals below to compare them with the answer.</p>
         <div class="result-actions">
           <button class="share-button" id="share-button">Share</button>
-          <div class="countdown">
+          <button class="share-button" id="next-button" hidden>Next interval →</button>
+          <div class="countdown" id="countdown-box">
             <span>Next puzzle in</span>
             <strong id="countdown">--:--:--</strong>
           </div>
@@ -76,6 +83,8 @@
       </ul>
       <h3>Hints</h3>
       <p>Each miss unlocks a new hint: first you can hear the notes together, then you learn whether the interval is small or large, and finally its family.</p>
+      <h3>Practice</h3>
+      <p>Want more? Switch to <strong>Practice</strong> for unlimited random intervals with the same rules. Practice games don't affect your daily stats.</p>
       <p class="muted">Shortcuts: <kbd>Space</kbd> plays the notes, <kbd>Enter</kbd> submits.</p>
     </dialog>
 
