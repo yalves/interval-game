@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="A daily music game: listen to two piano notes and name the interval between them." />
+    <meta name="theme-color" content="#121213" />
+    <title>Musicle</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎹</text></svg>" />
+    <link rel="stylesheet" href="css/style.css" />
+    <script type="module" src="js/main.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <button class="icon-button" id="help-button" aria-label="How to play">?</button>
+      <h1>Musicle</h1>
+      <button class="icon-button" id="stats-button" aria-label="Statistics">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M4 20V10h3v10H4Zm6.5 0V4h3v16h-3ZM17 20v-7h3v7h-3Z" /></svg>
+      </button>
+    </header>
+
+    <main class="game">
+      <p class="subtitle"><span id="day-label">#1</span> · What's the interval between the two notes?</p>
+
+      <section class="listen">
+        <button class="play-button" id="play-melodic">
+          <span class="play-icon" aria-hidden="true">▶</span>
+          <span>Play notes</span>
+        </button>
+        <button class="play-button secondary" id="play-harmonic" disabled>
+          <span class="play-icon" aria-hidden="true">♫</span>
+          <span>Play together</span>
+        </button>
+      </section>
+
+      <ol class="attempts" id="attempts" aria-label="Guesses"></ol>
+
+      <ul class="hints" id="hints" aria-live="polite"></ul>
+
+      <section class="result" id="result" hidden>
+        <p class="result-title" id="result-title"></p>
+        <p class="result-answer" id="result-answer"></p>
+        <div class="keyboard" id="keyboard" aria-hidden="true"></div>
+        <p class="result-tip">Tap the intervals below to compare them with the answer.</p>
+        <div class="result-actions">
+          <button class="share-button" id="share-button">Share</button>
+          <div class="countdown">
+            <span>Next puzzle in</span>
+            <strong id="countdown">--:--:--</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="choices" aria-label="Intervals">
+        <div class="interval-grid" id="interval-grid"></div>
+        <button class="confirm-button" id="confirm-button" disabled>Submit</button>
+      </section>
+    </main>
+
+    <dialog class="modal" id="help-modal">
+      <button class="close-button" data-close aria-label="Close">×</button>
+      <h2>How to play</h2>
+      <p>There's a new puzzle every day. Listen to two piano notes and name the <strong>interval</strong> between them in <strong>4 guesses</strong> or fewer.</p>
+      <p>An interval is the distance between two notes, measured in semitones (each neighboring key on the piano, white or black, is one semitone). The second note can be higher or lower than the first.</p>
+      <h3>Colors</h3>
+      <ul class="legend">
+        <li><span class="swatch correct"></span> Correct interval.</li>
+        <li><span class="swatch close"></span> Wrong, but in the same family (perfect consonance, imperfect consonance or dissonance).</li>
+        <li><span class="swatch wrong"></span> Wrong, and in a different family.</li>
+      </ul>
+      <h3>Families</h3>
+      <ul class="families">
+        <li><strong>Perfect consonances:</strong> perfect 4th, perfect 5th, octave.</li>
+        <li><strong>Imperfect consonances:</strong> 3rds and 6ths.</li>
+        <li><strong>Dissonances:</strong> 2nds, 7ths and the tritone.</li>
+      </ul>
+      <h3>Hints</h3>
+      <p>Each miss unlocks a new hint: first you can hear the notes together, then you learn whether the interval is small or large, and finally its family.</p>
+      <p class="muted">Shortcuts: <kbd>Space</kbd> plays the notes, <kbd>Enter</kbd> submits.</p>
+    </dialog>
+
+    <dialog class="modal" id="stats-modal">
+      <button class="close-button" data-close aria-label="Close">×</button>
+      <h2>Statistics</h2>
+      <div class="stats" id="stats"></div>
+      <h3>Guess distribution</h3>
+      <div class="distribution" id="distribution"></div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" hidden></div>
+  </body>
+</html>
