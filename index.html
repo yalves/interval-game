@@ -2,20 +2,47 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="A daily music game: listen to two piano notes and name the interval between them." />
-    <meta name="theme-color" content="#121213" />
-    <title>Musicle</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎹</text></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Musicle · Daily ear training game</title>
+    <meta name="description" content="A daily ear training game: listen to two piano notes and name the interval, or name the chord. New puzzles every day." />
+    <link rel="canonical" href="https://intervalgame.com/" />
+    <meta name="theme-color" content="#121213" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Musicle" />
+    <meta property="og:title" content="Musicle · Can you name the interval?" />
+    <meta property="og:description" content="A daily ear training game. Listen to two piano notes, name the interval in 4 guesses. New puzzle every day." />
+    <meta property="og:url" content="https://intervalgame.com/" />
+    <meta property="og:image" content="https://intervalgame.com/images/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Musicle: a piano keyboard with two highlighted keys and the question: what's the interval?" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" href="images/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="images/apple-touch-icon.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
     <link rel="stylesheet" href="css/style.css" />
     <script type="module" src="js/main.js"></script>
   </head>
   <body>
     <header class="topbar">
-      <button class="icon-button" id="help-button" data-i18n-aria="howToPlay" aria-label="How to play">?</button>
+      <div class="topbar-side">
+        <button class="icon-button" id="help-button" data-i18n-aria="howToPlay" aria-label="How to play">?</button>
+        <button class="icon-button" id="settings-button" data-i18n-aria="settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5ZM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" transform="translate(-1 0)" /></svg>
+        </button>
+      </div>
       <h1>Musicle</h1>
-      <div class="topbar-actions">
-        <select class="language-select" id="language-select" data-i18n-aria="language" aria-label="Language"></select>
+      <div class="topbar-side end">
+        <div class="language-menu">
+          <button class="icon-button flag-button" id="language-button" aria-haspopup="menu" aria-expanded="false" data-i18n-aria="language" aria-label="Language"></button>
+          <ul class="menu" id="language-list" role="menu" hidden></ul>
+        </div>
         <button class="icon-button" id="stats-button" data-i18n-aria="statistics" aria-label="Statistics">
           <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M4 20V10h3v10H4Zm6.5 0V4h3v16h-3ZM17 20v-7h3v7h-3Z" /></svg>
         </button>
@@ -23,23 +50,38 @@
     </header>
 
     <main class="game">
-      <nav class="modes" role="tablist" data-i18n-aria="gameMode" aria-label="Game mode">
-        <button role="tab" data-mode="daily" aria-selected="true" data-i18n="daily">Daily</button>
-        <button role="tab" data-mode="practice" aria-selected="false" data-i18n="practice">Practice</button>
-      </nav>
+      <div class="switches">
+        <nav class="segmented" role="tablist" data-i18n-aria="gameType" aria-label="Game">
+          <button role="tab" data-type="intervals" aria-selected="true" data-i18n="typeIntervals">Intervals</button>
+          <button role="tab" data-type="chords" aria-selected="false" data-i18n="typeChords">Chords</button>
+        </nav>
+        <nav class="segmented" role="tablist" data-i18n-aria="gameMode" aria-label="Game mode">
+          <button role="tab" data-mode="daily" aria-selected="true" data-i18n="daily">Daily</button>
+          <button role="tab" data-mode="practice" aria-selected="false" data-i18n="practice">Practice</button>
+        </nav>
+      </div>
 
-      <p class="subtitle"><span id="day-label">#1</span> · <span data-i18n="question">What's the interval between the two notes?</span></p>
+      <p class="subtitle"><span id="day-label">#1</span> · <span id="question"></span></p>
       <p class="practice-stats" id="practice-stats" hidden></p>
+      <p class="archive-note" id="archive-note" hidden><button class="link-button" id="back-to-today" data-i18n="backToToday">Back to today</button></p>
+
+      <details class="practice-panel" id="practice-panel" hidden>
+        <summary data-i18n="practiceSettings">Practice settings</summary>
+        <div id="practice-panel-body"></div>
+      </details>
 
       <section class="listen">
-        <button class="play-button" id="play-melodic">
-          <span class="play-icon" aria-hidden="true">▶</span>
-          <span data-i18n="playNotes">Play notes</span>
-        </button>
-        <button class="play-button secondary" id="play-harmonic" disabled>
-          <span class="play-icon" aria-hidden="true">♫</span>
-          <span data-i18n="playTogether">Play together</span>
-        </button>
+        <div class="listen-buttons">
+          <button class="play-button" id="play-primary">
+            <span class="play-icon" aria-hidden="true">▶</span>
+            <span id="play-primary-label">Play notes</span>
+          </button>
+          <button class="play-button secondary" id="play-secondary" disabled>
+            <span class="play-icon" aria-hidden="true">♫</span>
+            <span id="play-secondary-label">Play together</span>
+          </button>
+        </div>
+        <p class="listens-left" id="listens-left" hidden></p>
       </section>
 
       <ol class="attempts" id="attempts" data-i18n-aria="guesses" aria-label="Guesses"></ol>
@@ -49,20 +91,22 @@
       <section class="result" id="result" hidden>
         <p class="result-title" id="result-title"></p>
         <p class="result-answer" id="result-answer"></p>
+        <p class="result-song" id="result-song" hidden></p>
         <div class="keyboard" id="keyboard" aria-hidden="true"></div>
-        <p class="result-tip" data-i18n="resultTip">Tap the intervals below to compare them with the answer.</p>
+        <p class="result-tip" data-i18n="resultTip">Tap the answers below to compare them with the right one.</p>
         <div class="result-actions">
-          <button class="share-button" id="share-button" data-i18n="share">Share</button>
-          <button class="share-button" id="next-button" data-i18n="nextInterval" hidden>Next interval →</button>
+          <button class="action-button" id="share-button" data-i18n="share">Share</button>
+          <button class="action-button" id="next-button" data-i18n="nextPuzzle" hidden>Next →</button>
           <div class="countdown" id="countdown-box">
             <span data-i18n="nextPuzzleIn">Next puzzle in</span>
             <strong id="countdown">--:--:--</strong>
           </div>
         </div>
+        <button class="link-button" id="result-archive-button" data-i18n="playArchive">Play past puzzles</button>
       </section>
 
-      <section class="choices" data-i18n-aria="intervalsLabel" aria-label="Intervals">
-        <div class="interval-grid" id="interval-grid"></div>
+      <section class="choices" data-i18n-aria="options" aria-label="Answers">
+        <div class="option-grid" id="option-grid"></div>
         <button class="confirm-button" id="confirm-button" disabled>Submit</button>
       </section>
     </main>
@@ -74,10 +118,48 @@
 
     <dialog class="modal" id="stats-modal">
       <button class="close-button" data-close data-i18n-aria="close" aria-label="Close">×</button>
-      <h2 data-i18n="statistics">Statistics</h2>
+      <h2 id="stats-title">Statistics</h2>
       <div class="stats" id="stats"></div>
       <h3 data-i18n="guessDistribution">Guess distribution</h3>
       <div class="distribution" id="distribution"></div>
+      <button class="action-button wide" id="stats-archive-button" data-i18n="playArchive">Play past puzzles</button>
+    </dialog>
+
+    <dialog class="modal" id="archive-modal">
+      <button class="close-button" data-close data-i18n-aria="close" aria-label="Close">×</button>
+      <h2 id="archive-title">Past puzzles</h2>
+      <ul class="archive-list" id="archive-list"></ul>
+    </dialog>
+
+    <dialog class="modal" id="settings-modal">
+      <button class="close-button" data-close data-i18n-aria="close" aria-label="Close">×</button>
+      <h2 data-i18n="settings">Settings</h2>
+      <div class="setting">
+        <label for="setting-hard"><strong data-i18n="hardMode">Hard mode</strong><small data-i18n="hardModeInfo"></small></label>
+        <input type="checkbox" class="switch" id="setting-hard" />
+      </div>
+      <div class="setting">
+        <label for="setting-contrast"><strong data-i18n="highContrast">High contrast colors</strong><small data-i18n="highContrastInfo"></small></label>
+        <input type="checkbox" class="switch" id="setting-contrast" />
+      </div>
+      <div class="setting column">
+        <strong data-i18n="instrument">Instrument</strong>
+        <div class="choice-row" id="setting-instrument"></div>
+      </div>
+      <div class="setting column">
+        <label for="setting-volume"><strong data-i18n="volume">Volume</strong></label>
+        <input type="range" id="setting-volume" min="0" max="100" step="5" />
+      </div>
+      <div class="setting column">
+        <strong data-i18n="transfer">Move your progress</strong>
+        <small data-i18n="transferInfo"></small>
+        <button class="action-button" id="export-button" data-i18n="copyCode">Copy code</button>
+        <div class="import-row">
+          <input type="text" id="import-input" autocomplete="off" spellcheck="false" />
+          <button class="action-button secondary" id="import-button" data-i18n="importCode">Import</button>
+        </div>
+      </div>
+      <p class="credits" data-i18n-html="credits"></p>
     </dialog>
 
     <div class="toast" id="toast" role="status" hidden></div>
