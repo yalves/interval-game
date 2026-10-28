@@ -1,6 +1,6 @@
 {
-  "name": "Musicle · Daily ear training",
-  "short_name": "Musicle",
+  "name": "Interval Game · Daily ear training",
+  "short_name": "Interval Game",
   "description": "A daily ear training game: name the interval or the chord.",
   "start_url": "./",
   "scope": "./",

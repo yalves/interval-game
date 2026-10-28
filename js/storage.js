@@ -1,6 +1,21 @@
 // Everything the game saves lives in localStorage under this prefix.
-const PREFIX = 'musicle:';
+const PREFIX = 'intervalgame:';
+// The game used to be called Musicle; its saved data and transfer codes still work.
+const OLD_PREFIX = 'musicle:';
 const CODE_VERSION = 'M1.';
+
+const renamedKey = (key) => (key.startsWith(OLD_PREFIX) ? PREFIX + key.slice(OLD_PREFIX.length) : key);
+
+// Runs once on load, before anything reads saved data.
+try {
+  for (const key of Object.keys(localStorage)) {
+    if (!key.startsWith(OLD_PREFIX)) continue;
+    if (localStorage.getItem(renamedKey(key)) === null) localStorage.setItem(renamedKey(key), localStorage.getItem(key));
+    localStorage.removeItem(key);
+  }
+} catch {
+  // No storage available.
+}
 
 export const storage = {
   get(key, fallback) {
@@ -51,7 +66,7 @@ export function importProgress(code) {
   if (!trimmed.startsWith(CODE_VERSION)) throw new Error('Unknown code');
   const bytes = Uint8Array.from(atob(trimmed.slice(CODE_VERSION.length)), (c) => c.charCodeAt(0));
   const data = JSON.parse(new TextDecoder().decode(bytes));
-  const entries = Object.entries(data);
+  const entries = Object.entries(data).map(([key, value]) => [renamedKey(key), value]);
   if (!entries.length || !entries.every(([key, value]) => key.startsWith(PREFIX) && typeof value === 'string')) {
     throw new Error('Invalid code');
   }

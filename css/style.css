@@ -98,8 +98,9 @@ a {
 
 .topbar h1 {
   margin: 0;
-  font-size: 1.9rem;
-  letter-spacing: 0.04em;
+  font-size: clamp(1.1rem, 5.2vw, 1.9rem);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .topbar-side {
@@ -968,10 +969,6 @@ kbd {
     padding-left: 12px;
     padding-right: 12px;
     gap: 6px;
-  }
-
-  .topbar h1 {
-    font-size: 1.5rem;
   }
 
   .topbar-side {

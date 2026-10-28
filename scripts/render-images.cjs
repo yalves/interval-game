@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 
-const NAME = 'Musicle';
+const NAME = 'Interval Game';
 const OUT = path.join(__dirname, '..', 'images');
 
 // Four piano keys with the "first" and "second" notes highlighted, like the result screen.

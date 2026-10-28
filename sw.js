@@ -2,7 +2,7 @@
 // copy when offline); scripts, styles, images and samples are cache-first.
 // Deploys add ?v=<commit> to scripts and styles, so new versions get new URLs.
 
-const CACHE = 'musicle-v1';
+const CACHE = 'intervalgame-v1';
 
 self.addEventListener('install', () => self.skipWaiting());
 

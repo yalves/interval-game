@@ -1,6 +1,6 @@
 // Pure game logic (no DOM), so it can be tested in Node.
 
-export const APP_NAME = 'Musicle';
+export const APP_NAME = 'Interval Game';
 export const MAX_ATTEMPTS = 4;
 export const HARD_MODE_LISTENS = 3;
 

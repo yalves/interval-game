@@ -105,11 +105,11 @@ test('game status and share text', () => {
   assert.equal(gameStatus(puzzle, [1, 4]), 'playing');
   assert.equal(gameStatus(puzzle, [1, 3]), 'won');
   assert.equal(gameStatus(puzzle, [1, 2, 4, 5]), 'lost');
-  assert.equal(shareText(puzzle, [12, 4, 3]), `Musicle #3 3/${MAX_ATTEMPTS}\n🎹 ⬛🟨🟩`);
-  assert.equal(shareText(puzzle, [1, 2, 4, 5]), `Musicle #3 X/${MAX_ATTEMPTS}\n🎹 ⬛⬛🟨⬛`);
-  assert.equal(shareText(puzzle, [4, 3], { hard: true, highContrast: true }), `Musicle #3 2/${MAX_ATTEMPTS}*\n🎹 🟦🟧`);
+  assert.equal(shareText(puzzle, [12, 4, 3]), `Interval Game #3 3/${MAX_ATTEMPTS}\n🎹 ⬛🟨🟩`);
+  assert.equal(shareText(puzzle, [1, 2, 4, 5]), `Interval Game #3 X/${MAX_ATTEMPTS}\n🎹 ⬛⬛🟨⬛`);
+  assert.equal(shareText(puzzle, [4, 3], { hard: true, highContrast: true }), `Interval Game #3 2/${MAX_ATTEMPTS}*\n🎹 🟦🟧`);
   const chord = { type: 'chords', day: 2, answer: 'major', root: 60, notes: [60, 64, 67] };
-  assert.equal(shareText(chord, ['major'], { title: 'Musicle Chords' }), `Musicle Chords #2 1/${MAX_ATTEMPTS}\n🎶 🟩`);
+  assert.equal(shareText(chord, ['major'], { title: 'Interval Game Chords' }), `Interval Game Chords #2 1/${MAX_ATTEMPTS}\n🎶 🟩`);
 });
 
 test('spellNotes writes notes the way the interval or chord is named', () => {
@@ -157,7 +157,7 @@ test('harmony: diatonic chords, sounds, hints and families', () => {
     { key: 'hintFamily', family: 'dominant' },
   ]);
   assert.equal(hintsFor({ ...puzzle, mode: 'minor' }, 1)[1].key, 'hintMinorKey');
-  assert.equal(shareText(puzzle, [5], { title: 'Musicle Harmony' }), `Musicle Harmony #1 1/${MAX_ATTEMPTS}\n🎼 🟩`);
+  assert.equal(shareText(puzzle, [5], { title: 'Interval Game Harmony' }), `Interval Game Harmony #1 1/${MAX_ATTEMPTS}\n🎼 🟩`);
 
   // The key is spelled the usual way: B♭ major (not A♯), with E♭ in its IV chord.
   const name = (spelling) => spelling.map(({ letter, accidental }) => `${'CDEFGAB'[letter]}${{ '-1': 'b', 0: '', 1: '#' }[accidental]}`).join(' ');
