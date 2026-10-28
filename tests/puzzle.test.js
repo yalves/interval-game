@@ -9,7 +9,6 @@ import {
   evaluateGuess,
   gameStatus,
   hintsFor,
-  noteName,
   puzzleForDay,
   randomPuzzle,
   shareText,
@@ -55,15 +54,13 @@ test('game status, hints and share text', () => {
   assert.equal(gameStatus(puzzle, [1, 2, 4, 5]), 'lost');
   assert.equal(hintsFor(puzzle, 0).length, 0);
   assert.equal(hintsFor(puzzle, 3).length, 3);
-  assert.match(hintsFor(puzzle, 3)[2], /imperfect consonance/);
+  assert.deepEqual(hintsFor(puzzle, 3), [
+    { key: 'hintTogether' },
+    { key: 'hintSmall' },
+    { key: 'hintFamily', family: 'imperfect' },
+  ]);
   assert.equal(shareText(puzzle, [12, 4, 3]), `Musicle #3 3/${MAX_ATTEMPTS}\n🎹 ⬛🟨🟩`);
   assert.equal(shareText(puzzle, [1, 2, 4, 5]), `Musicle #3 X/${MAX_ATTEMPTS}\n🎹 ⬛⬛🟨⬛`);
-});
-
-test('noteName uses scientific pitch notation', () => {
-  assert.equal(noteName(60), 'C4');
-  assert.equal(noteName(69), 'A4');
-  assert.equal(noteName(70), 'A♯4');
 });
 
 test('randomPuzzle avoids the previous interval and stays in range', () => {

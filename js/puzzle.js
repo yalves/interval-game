@@ -9,37 +9,25 @@ export const LAUNCH = { year: 2026, month: 10, day: 28 };
 export const LOWEST_NOTE = 48;
 export const HIGHEST_NOTE = 79;
 
-export const FAMILIES = {
-  perfect: 'perfect consonance',
-  imperfect: 'imperfect consonance',
-  dissonant: 'dissonance',
-};
-
 export const INTERVALS = [
-  { semitones: 1, name: 'Minor 2nd', family: 'dissonant' },
-  { semitones: 2, name: 'Major 2nd', family: 'dissonant' },
-  { semitones: 3, name: 'Minor 3rd', family: 'imperfect' },
-  { semitones: 4, name: 'Major 3rd', family: 'imperfect' },
-  { semitones: 5, name: 'Perfect 4th', family: 'perfect' },
-  { semitones: 6, name: 'Tritone', family: 'dissonant' },
-  { semitones: 7, name: 'Perfect 5th', family: 'perfect' },
-  { semitones: 8, name: 'Minor 6th', family: 'imperfect' },
-  { semitones: 9, name: 'Major 6th', family: 'imperfect' },
-  { semitones: 10, name: 'Minor 7th', family: 'dissonant' },
-  { semitones: 11, name: 'Major 7th', family: 'dissonant' },
-  { semitones: 12, name: 'Octave', family: 'perfect' },
+  { semitones: 1, family: 'dissonant' },
+  { semitones: 2, family: 'dissonant' },
+  { semitones: 3, family: 'imperfect' },
+  { semitones: 4, family: 'imperfect' },
+  { semitones: 5, family: 'perfect' },
+  { semitones: 6, family: 'dissonant' },
+  { semitones: 7, family: 'perfect' },
+  { semitones: 8, family: 'imperfect' },
+  { semitones: 9, family: 'imperfect' },
+  { semitones: 10, family: 'dissonant' },
+  { semitones: 11, family: 'dissonant' },
+  { semitones: 12, family: 'perfect' },
 ];
-
-const NOTE_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
 
 const DAY_MS = 86_400_000;
 
 export function intervalBySemitones(semitones) {
   return INTERVALS.find((i) => i.semitones === semitones);
-}
-
-export function noteName(midi) {
-  return `${NOTE_NAMES[midi % 12]}${Math.floor(midi / 12) - 1}`;
 }
 
 export function isBlackKey(midi) {
@@ -109,22 +97,12 @@ export function evaluateGuess(puzzle, guess) {
   return intervalBySemitones(guess).family === family ? 'close' : 'wrong';
 }
 
-// Hints unlocked progressively with each miss.
+// Hints unlocked progressively with each miss, as translation keys + params.
 export function hintsFor(puzzle, misses) {
   const hints = [];
-  if (misses >= 1) {
-    hints.push('You can now hear both notes played together.');
-  }
-  if (misses >= 2) {
-    hints.push(
-      puzzle.semitones <= 6
-        ? "It's a small interval: 6 semitones (tritone) or less."
-        : "It's a large interval: 7 semitones (perfect 5th) or more.",
-    );
-  }
-  if (misses >= 3) {
-    hints.push(`It's a ${FAMILIES[intervalBySemitones(puzzle.semitones).family]}.`);
-  }
+  if (misses >= 1) hints.push({ key: 'hintTogether' });
+  if (misses >= 2) hints.push({ key: puzzle.semitones <= 6 ? 'hintSmall' : 'hintLarge' });
+  if (misses >= 3) hints.push({ key: 'hintFamily', family: intervalBySemitones(puzzle.semitones).family });
   return hints;
 }
 

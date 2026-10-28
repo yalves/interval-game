@@ -5,18 +5,18 @@ import {
   evaluateGuess,
   gameStatus,
   hintsFor,
-  intervalBySemitones,
   isBlackKey,
-  noteName,
   puzzleForDay,
   randomPuzzle,
   shareText,
 } from './puzzle.js';
 import { playHarmonic, playMelodic } from './audio.js';
+import { DEFAULT_LANGUAGE, getLanguage, intervalName, noteName, setLanguage, t } from './i18n.js';
 
 const STATE_KEY = 'musicle:state';
 const STATS_KEY = 'musicle:stats';
 const HELP_SEEN_KEY = 'musicle:help-seen';
+const LANGUAGE_KEY = 'musicle:language';
 const PRACTICE_STATS_KEY = 'musicle:practice-stats';
 
 const storage = {
@@ -119,10 +119,10 @@ function renderStats() {
   const streak = stats.lastWonDay !== null && stats.lastWonDay >= day - 1 ? stats.currentStreak : 0;
   const winRate = stats.played ? Math.round((stats.wins / stats.played) * 100) : 0;
   const items = [
-    [stats.played, 'Played'],
-    [winRate, 'Win %'],
-    [streak, 'Current streak'],
-    [stats.maxStreak, 'Max streak'],
+    [stats.played, t('statPlayed')],
+    [winRate, t('statWinRate')],
+    [streak, t('statStreak')],
+    [stats.maxStreak, t('statMaxStreak')],
   ];
   $('#stats').innerHTML = items
     .map(([value, label]) => `<div class="stat"><strong>${value}</strong><span>${label}</span></div>`)
@@ -149,7 +149,6 @@ function buildIntervalGrid() {
     const button = document.createElement('button');
     button.className = 'interval';
     button.dataset.semitones = interval.semitones;
-    button.innerHTML = `<strong>${interval.name}</strong><small>${interval.semitones} ${interval.semitones === 1 ? 'semitone' : 'semitones'}</small>`;
     button.addEventListener('click', () => onIntervalClick(interval.semitones));
     grid.append(button);
   }
@@ -187,7 +186,7 @@ function submitGuess() {
     return;
   }
   render();
-  showToast(result === 'close' ? 'Close! Same family.' : 'Not that one.');
+  showToast(t(result === 'close' ? 'toastClose' : 'toastWrong'));
 }
 
 function render() {
@@ -197,11 +196,11 @@ function render() {
   for (const tab of document.querySelectorAll('[data-mode]')) {
     tab.setAttribute('aria-selected', String(tab.dataset.mode === mode));
   }
-  $('#day-label').textContent = mode === 'daily' ? `#${day}` : 'Practice';
+  $('#day-label').textContent = mode === 'daily' ? `#${day}` : t('practice');
   $('#practice-stats').hidden = mode !== 'practice';
   if (mode === 'practice') {
     const stats = loadPracticeStats();
-    $('#practice-stats').textContent = `${stats.wins}/${stats.played} correct · Streak ${stats.streak} · Best ${stats.bestStreak}`;
+    $('#practice-stats').textContent = t('practiceStats', { wins: stats.wins, played: stats.played, streak: stats.streak, best: stats.bestStreak });
   }
   $('#play-harmonic').disabled = !over && misses() < 1;
 
@@ -209,14 +208,15 @@ function render() {
     const guess = guesses[i];
     if (guess === undefined) return '<li class="attempt empty"></li>';
     const result = evaluateGuess(puzzle, guess);
-    return `<li class="attempt ${result}">${intervalBySemitones(guess).name}</li>`;
+    return `<li class="attempt ${result}">${intervalName(guess)}</li>`;
   }).join('');
 
-  $('#hints').innerHTML = over ? '' : hintsFor(puzzle, misses()).map((h) => `<li>${h}</li>`).join('');
+  $('#hints').innerHTML = over ? '' : hintsFor(puzzle, misses()).map(({ key, family }) => `<li>${t(key, { family: family && t('families')[family] })}</li>`).join('');
 
   for (const button of document.querySelectorAll('.interval')) {
     const semitones = Number(button.dataset.semitones);
     button.className = 'interval';
+    button.innerHTML = `<strong>${intervalName(semitones)}</strong><small>${semitones} ${t(semitones === 1 ? 'semitone' : 'semitones')}</small>`;
     if (guesses.includes(semitones)) button.classList.add(evaluateGuess(puzzle, semitones));
     if (over && semitones === puzzle.semitones) button.classList.add('answer');
     if (semitones === selected || (over && semitones === comparing)) button.classList.add('selected');
@@ -226,17 +226,20 @@ function render() {
   const confirm = $('#confirm-button');
   confirm.hidden = over;
   confirm.disabled = selected === null;
-  confirm.textContent = selected === null ? 'Pick an interval' : `Submit: ${intervalBySemitones(selected).name}`;
+  confirm.textContent = selected === null ? t('pickInterval') : t('submit', { name: intervalName(selected) });
 
   $('#result').hidden = !over;
   $('#share-button').hidden = mode !== 'daily';
   $('#countdown-box').hidden = mode !== 'daily';
   $('#next-button').hidden = mode !== 'practice';
   if (over) {
-    const interval = intervalBySemitones(puzzle.semitones);
-    $('#result-title').textContent =
-      current === 'won' ? ['Genius! 🎉', 'Great ear! 👏', 'Nice! 🎵', 'Phew, close one! 😅'][guesses.length - 1] : 'Not this time 🎹';
-    $('#result-answer').innerHTML = `The answer was an <strong>${puzzle.ascending ? 'ascending' : 'descending'} ${interval.name.toLowerCase()}</strong>: ${noteName(puzzle.first)} → ${noteName(puzzle.second)}.`;
+    $('#result-title').textContent = current === 'won' ? t('winTitles')[guesses.length - 1] : t('lossTitle');
+    $('#result-answer').innerHTML = t('answer', {
+      ascending: puzzle.ascending,
+      name: intervalName(puzzle.semitones),
+      first: noteName(puzzle.first),
+      second: noteName(puzzle.second),
+    });
     if (comparing === null) renderKeyboard(null);
   }
 }
@@ -294,6 +297,29 @@ function setupAudioButtons() {
   });
 }
 
+// Language
+
+// Fills every element marked with data-i18n (text), data-i18n-html or data-i18n-aria.
+function translatePage() {
+  document.documentElement.lang = getLanguage();
+  for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);
+  for (const el of document.querySelectorAll('[data-i18n-html]')) el.innerHTML = t(el.dataset.i18nHtml);
+  for (const el of document.querySelectorAll('[data-i18n-aria]')) el.setAttribute('aria-label', t(el.dataset.i18nAria));
+  $('#language-select').value = getLanguage();
+}
+
+function setupLanguage() {
+  setLanguage(storage.get(LANGUAGE_KEY, DEFAULT_LANGUAGE));
+  translatePage();
+  $('#language-select').addEventListener('change', (event) => {
+    setLanguage(event.target.value);
+    storage.set(LANGUAGE_KEY, getLanguage());
+    translatePage();
+    render();
+    if ($('#stats-modal').open) renderStats();
+  });
+}
+
 // Modes
 
 function setMode(next) {
@@ -338,9 +364,9 @@ async function share() {
   }
   try {
     await navigator.clipboard.writeText(text);
-    showToast('Copied results to clipboard!');
+    showToast(t('toastCopied'));
   } catch {
-    showToast("Couldn't copy the results.");
+    showToast(t('toastCopyFailed'));
   }
 }
 
@@ -400,6 +426,7 @@ function setupKeyboardShortcuts() {
   });
 }
 
+setupLanguage();
 buildIntervalGrid();
 setupAudioButtons();
 setupModals();

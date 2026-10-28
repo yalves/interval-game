@@ -9,6 +9,7 @@ A daily ear-training game in the style of Wordle: every day you hear two piano n
 - **Hints** after each miss: (1) hear the notes played together, (2) small vs. large interval, (3) the interval's family.
 - **After the game**: the answer is shown on a piano keyboard, and the interval buttons play each interval from the same starting note for comparison.
 - **Practice mode**: unlimited random intervals with the same rules, with its own score and streak (doesn't affect daily stats). Link straight to it with `#practice`.
+- **Languages**: English (default) and Brazilian Portuguese, picked in the header and remembered per browser. All UI text lives in `js/i18n.js`; to add a language, add an entry to `STRINGS` and `LANGUAGES` (a test checks that every language has the same keys).
 - **Stats and streaks** are stored in `localStorage`; results can be shared as an emoji grid.
 - The piano is synthesized with the Web Audio API — no audio files.
 
@@ -28,6 +29,7 @@ index.html
 css/style.css
 js/puzzle.js     # pure logic: daily puzzle, scoring, hints, share text
 js/audio.js      # piano synthesis
+js/i18n.js       # UI text for each language
 js/main.js       # UI, persistence, stats
 tests/           # node:test tests
 ```
