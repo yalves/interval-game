@@ -21,4 +21,17 @@ jobs:
         with:
           node-version: 22
       - run: npm test
-      - run: git push --force origin HEAD:gh-pages
+      # GitHub Pages caches every file for 10 minutes, so right after a deploy a
+      # browser could mix a new index.html with old scripts. Tagging every CSS/JS
+      # URL (including module imports) with the commit keeps each version whole.
+      - name: Version asset URLs
+        run: |
+          v="${GITHUB_SHA::8}"
+          sed -i -E "s#(href|src)=\"((css|js)/[^\"]+\.(css|js))\"#\1=\"\2?v=$v\"#g" index.html
+          sed -i -E "s#(from '\./[^']+\.js)'#\1?v=$v'#g" js/*.js
+      - name: Publish
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Publish ${GITHUB_SHA::8}"
+          git push --force origin HEAD:gh-pages
