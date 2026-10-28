@@ -21,6 +21,7 @@ import { INSTRUMENTS, playGroups, playNotes, prefetch, setInstrument, setVolume 
 import { DEFAULT_LANGUAGE, LANGUAGES, chordSymbol, getLanguage, noteName, optionName, pitchName, romanNumeral, setLanguage, songFor, t } from './i18n.js';
 import { FLAGS } from './flags.js';
 import { exportProgress, importProgress, storage } from './storage.js';
+import { track, trackAppUsage, trackFinishedGame } from './analytics.js';
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -598,6 +599,7 @@ function submitGuess() {
 
   const result = evaluateGuess(game.puzzle, game.guesses.at(-1));
   if (status() !== 'playing') {
+    trackFinishedGame(type, mode, game.puzzle, game.guesses, game.hard);
     if (mode === 'daily') recordDailyResult();
     if (mode === 'practice') {
       storage.set(keyFor('practice-stats', type), recordPracticeGame(loadPracticeStats(), game.puzzle.answer, game.guesses));
@@ -644,6 +646,7 @@ function setupAudioButtons() {
 // Sharing and countdown
 
 async function share() {
+  track(`share-${type}`);
   const title = type === 'intervals' ? APP_NAME : `${APP_NAME} ${typeName()}`;
   const url = `${location.origin}${location.pathname}${hashFor({ type, mode: 'daily' })}`;
   const text = `${shareText(game.puzzle, game.guesses, { title, hard: game.hard, highContrast: settings.highContrast })}\n${url}`;
@@ -734,6 +737,7 @@ function setupLanguage() {
     if (!option) return;
     setLanguage(option.dataset.language);
     storage.set('language', getLanguage());
+    track(`language-${getLanguage()}`);
     toggle(false);
     translatePage();
     renderPracticePanel();
@@ -791,10 +795,12 @@ function setupSettings() {
       return;
     }
     saveSettings({ hard: turningOn });
+    if (turningOn) track('hard-mode-on');
     render();
   });
   $('#setting-contrast').addEventListener('change', (event) => {
     saveSettings({ highContrast: event.target.checked });
+    if (event.target.checked) track('high-contrast-on');
     applySettings();
   });
   $('#setting-volume').addEventListener('input', (event) => {
@@ -804,17 +810,22 @@ function setupSettings() {
   $('#setting-volume').addEventListener('change', () => playNotes([60], 'harmonic'));
   $('#setting-instrument').addEventListener('change', (event) => {
     saveSettings({ instrument: event.target.value });
+    track(`instrument-${event.target.value}`);
     setInstrument(settings.instrument);
     playNotes([60, 64, 67], 'melodic');
   });
 
-  $('#export-button').addEventListener('click', () => copy(exportProgress(), t('codeCopied')));
+  $('#export-button').addEventListener('click', () => {
+    track('progress-export');
+    copy(exportProgress(), t('codeCopied'));
+  });
   $('#import-button').addEventListener('click', () => {
     const code = $('#import-input').value;
     if (!code.trim()) return;
     if (!confirm(t('importConfirm'))) return;
     try {
       importProgress(code);
+      track('progress-import');
       location.reload();
     } catch {
       showToast(t('importInvalid'));
@@ -937,3 +948,4 @@ startCountdown();
 navigate(parseHash());
 prefetch();
 registerServiceWorker();
+trackAppUsage();
