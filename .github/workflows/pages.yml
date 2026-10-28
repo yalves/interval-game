@@ -29,9 +29,17 @@ jobs:
           v="${GITHUB_SHA::8}"
           sed -i -E "s#(href|src)=\"((css|js)/[^\"]+\.(css|js))\"#\1=\"\2?v=$v\"#g" index.html
           sed -i -E "s#(from '\./[^']+\.js)'#\1?v=$v'#g" js/*.js
+      # The custom domain set in Settings → Pages lives in a CNAME file on
+      # gh-pages; carry it over so publishing doesn't remove the domain.
+      - name: Keep the custom domain
+        run: |
+          if [ ! -f CNAME ]; then
+            git show origin/gh-pages:CNAME > CNAME 2>/dev/null || rm -f CNAME
+          fi
       - name: Publish
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -am "Publish ${GITHUB_SHA::8}"
+          git add -A
+          git commit -m "Publish ${GITHUB_SHA::8}"
           git push --force origin HEAD:gh-pages
