@@ -11,7 +11,7 @@ import {
   shareText,
 } from './puzzle.js';
 import { playHarmonic, playMelodic } from './audio.js';
-import { DEFAULT_LANGUAGE, getLanguage, intervalName, noteName, setLanguage, t } from './i18n.js';
+import { DEFAULT_LANGUAGE, LANGUAGES, getLanguage, intervalName, noteName, setLanguage, t } from './i18n.js';
 
 const STATE_KEY = 'musicle:state';
 const STATS_KEY = 'musicle:stats';
@@ -309,6 +309,7 @@ function translatePage() {
 }
 
 function setupLanguage() {
+  for (const [value, label] of Object.entries(LANGUAGES)) $('#language-select').add(new Option(label, value));
   setLanguage(storage.get(LANGUAGE_KEY, DEFAULT_LANGUAGE));
   translatePage();
   $('#language-select').addEventListener('change', (event) => {

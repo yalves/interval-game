@@ -3,9 +3,10 @@
 
 export const DEFAULT_LANGUAGE = 'en';
 
+// Label shown in the language picker.
 export const LANGUAGES = {
-  en: 'EN',
-  'pt-BR': 'PT',
+  en: '🇺🇸',
+  'pt-BR': '🇧🇷',
 };
 
 export const STRINGS = {
