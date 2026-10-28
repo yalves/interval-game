@@ -230,16 +230,14 @@ function playSynthNote(bus, midi, when) {
   noise.start(when);
 }
 
-// Plays the notes one after another ('melodic') or together ('harmonic').
+// Plays groups of notes (each group sounds together), `gap` seconds apart.
 // Returns roughly how long it sounds, in seconds.
-export function playNotes(notes, mode) {
+export function playGroups(groups, gap) {
   audio();
   const bus = newBus();
-  const gap = notes.length > 2 ? 0.55 : 0.9;
-  const offsets = notes.map((_, i) => (mode === 'melodic' ? i * gap : 0));
   const schedule = (voice) => {
     const start = ctx.currentTime + 0.05;
-    notes.forEach((note, i) => voice(bus, note, start + offsets[i]));
+    groups.forEach((group, i) => group.forEach((note) => voice(bus, note, start + i * gap)));
   };
 
   if (INSTRUMENTS[instrument].length === 0) {
@@ -249,5 +247,10 @@ export function playNotes(notes, mode) {
       .then((samples) => schedule((...args) => playSample(samples, ...args)))
       .catch(() => schedule(playSynthNote));
   }
-  return offsets.at(-1) + NOTE_DURATION * 0.6;
+  return (groups.length - 1) * gap + NOTE_DURATION * 0.6;
+}
+
+// Plays the notes one after another ('melodic') or together ('harmonic').
+export function playNotes(notes, mode) {
+  return mode === 'melodic' ? playGroups(notes.map((n) => [n]), notes.length > 2 ? 0.55 : 0.9) : playGroups([notes], 0);
 }

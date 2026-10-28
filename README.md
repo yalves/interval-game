@@ -4,9 +4,9 @@ A daily ear-training game in the style of Wordle: every day you hear two piano n
 
 ## How it works
 
-- **Two daily puzzles**: *Intervals* (two notes, name the distance between them) and *Chords* (name the chord type). Each is picked by a seeded random generator from the date, so everyone gets the same puzzle on the same day, and the answer never repeats on consecutive days. Puzzle #1 is 2026-10-28; a new one starts at local midnight. `tests/fixtures/daily-intervals.json` locks the published interval puzzles so they can't change by accident.
-- **Feedback**: 🟩 correct · 🟨 wrong but same family · ⬛ wrong. Interval families are perfect/imperfect consonances and dissonances; chords are grouped by their third.
-- **Hints** after each miss: another way to listen (together / one note at a time), then the size (or number of chord notes), then the family.
+- **Three daily puzzles**: *Intervals* (two notes, name the distance between them), *Chords* (name the chord type) and *Harmony* (hear the I chord of a key, then another diatonic chord, and name its degree, II–VII; minor keys use the natural minor scale). Each is picked by a seeded random generator from the date, so everyone gets the same puzzle on the same day, and the answer never repeats on consecutive days. Puzzle #1 is 2026-10-28; a new one starts at local midnight. `tests/fixtures/daily-intervals.json` locks the published interval puzzles so they can't change by accident.
+- **Feedback**: 🟩 correct · 🟨 wrong but same family · ⬛ wrong. Interval families are perfect/imperfect consonances and dissonances; chords are grouped by their third; degrees by harmonic function (tonic III/VI, subdominant II/IV, dominant V/VII).
+- **Hints** after each miss: another way to listen (together / one note at a time / bass line), then the size (number of chord notes, or for Harmony whether the key is major or minor, then the chord quality), then the family.
 - **Hard mode**: 3 listens, no hints; shared results get a `*`.
 - **After the game**: the answer is shown on a keyboard with correct note spelling (A♭→G for a major 7th, not G♯→G), with a well-known song for the interval, and the answer buttons replay each option from the same starting note.
 - **Practice**: unlimited puzzles; choose which intervals (including compound ones up to the double octave) or chords to include, the direction and the playback. It focuses on what you miss most and lists your weak spots and usual confusions.

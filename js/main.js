@@ -1,5 +1,6 @@
 import {
   APP_NAME,
+  chordQuality,
   GAME_TYPES,
   HARD_MODE_LISTENS,
   MAX_ATTEMPTS,
@@ -12,11 +13,12 @@ import {
   puzzleForDay,
   randomPuzzle,
   shareText,
+  soundFor,
   spellNotes,
 } from './games.js';
 import { practiceStats, practiceWeights, recordPracticeGame, weakSpots } from './practice.js';
-import { INSTRUMENTS, playNotes, prefetch, setInstrument, setVolume } from './audio.js';
-import { DEFAULT_LANGUAGE, LANGUAGES, chordSymbol, getLanguage, noteName, optionName, setLanguage, songFor, t } from './i18n.js';
+import { INSTRUMENTS, playGroups, playNotes, prefetch, setInstrument, setVolume } from './audio.js';
+import { DEFAULT_LANGUAGE, LANGUAGES, chordSymbol, getLanguage, noteName, optionName, pitchName, romanNumeral, setLanguage, songFor, t } from './i18n.js';
 import { FLAGS } from './flags.js';
 import { exportProgress, importProgress, storage } from './storage.js';
 
@@ -31,7 +33,18 @@ const DEFAULT_SETTINGS = { hard: false, highContrast: false, volume: 0.8, instru
 const DEFAULT_PRACTICE = {
   intervals: { pool: GAME_TYPES.intervals.dailyPool, direction: 'both', playback: 'melodic', adaptive: true },
   chords: { pool: GAME_TYPES.chords.dailyPool, direction: 'both', playback: 'harmonic', adaptive: true },
+  harmony: { pool: GAME_TYPES.harmony.dailyPool, keyMode: 'both', playback: 'harmonic', adaptive: true },
 };
+
+// Per-game text keys.
+const TYPE_TEXT = {
+  intervals: { name: 'typeIntervals', question: 'questionIntervals', melodic: 'playIntervalsMelodic', harmonic: 'playIntervalsHarmonic' },
+  chords: { name: 'typeChords', question: 'questionChords', melodic: 'playChordsMelodic', harmonic: 'playChordsHarmonic' },
+  harmony: { name: 'typeHarmony', question: 'questionHarmony', melodic: 'playHarmonyMelodic', harmonic: 'playHarmonyHarmonic' },
+};
+
+// Answer ids are numbers except for chords; the DOM hands them back as strings.
+const parseOptionId = (id, gameType = type) => (gameType === 'chords' ? id : Number(id));
 
 let settings = { ...DEFAULT_SETTINGS, ...storage.get('settings', {}) };
 
@@ -42,6 +55,7 @@ let game; // { puzzle, guesses, hard, listens }
 const practiceGames = {};
 let selected = null;
 let comparing = null;
+let justGuessed = false; // only the newest guess tile flips in
 
 // Saved games
 
@@ -108,6 +122,7 @@ function newPracticeGame() {
     previous: practiceGames[type]?.puzzle.answer ?? null,
     weights: options.adaptive ? practiceWeights(loadPracticeStats(), options.pool) : null,
     direction: options.direction,
+    keyMode: options.keyMode,
   });
   return { puzzle, guesses: [], hard: null, listens: 0 };
 }
@@ -221,9 +236,10 @@ function openArchive() {
 function parseHash() {
   let rest = location.hash.slice(1);
   let gameType = 'intervals';
-  if (rest.startsWith('chords')) {
-    gameType = 'chords';
-    rest = rest.slice('chords'.length).replace(/^-/, '');
+  const prefixed = Object.keys(GAME_TYPES).find((id) => id !== 'intervals' && rest.startsWith(id));
+  if (prefixed) {
+    gameType = prefixed;
+    rest = rest.slice(prefixed.length).replace(/^-/, '');
   }
   if (rest === 'practice') return { type: gameType, mode: 'practice' };
   const archive = rest.match(/^archive-(\d+)$/);
@@ -235,7 +251,7 @@ function parseHash() {
 
 function hashFor(route) {
   const parts = [];
-  if (route.type === 'chords') parts.push('chords');
+  if (route.type !== 'intervals') parts.push(route.type);
   if (route.mode === 'practice') parts.push('practice');
   if (route.mode === 'archive') parts.push(`archive-${route.day}`);
   return parts.length ? `#${parts.join('-')}` : '';
@@ -260,7 +276,7 @@ function navigate(route) {
 // Rendering
 
 function typeName(gameType = type) {
-  return t(gameType === 'intervals' ? 'typeIntervals' : 'typeChords');
+  return t(TYPE_TEXT[gameType].name);
 }
 
 function primaryPlayback() {
@@ -268,8 +284,7 @@ function primaryPlayback() {
 }
 
 function playbackLabel(playback) {
-  const key = { intervals: { melodic: 'playIntervalsMelodic', harmonic: 'playIntervalsHarmonic' }, chords: { melodic: 'playChordsMelodic', harmonic: 'playChordsHarmonic' } };
-  return t(key[type][playback]);
+  return t(TYPE_TEXT[type][playback]);
 }
 
 // The answers shown as buttons: the daily pool, or the practice selection
@@ -283,6 +298,7 @@ function gridOptions() {
 
 function optionDetail(id) {
   if (type === 'chords') return chordSymbol(id);
+  if (type === 'harmony') return t('degree', { n: id });
   return `${id} ${t(id === 1 ? 'semitone' : 'semitones')}`;
 }
 
@@ -297,7 +313,7 @@ function render() {
   }
 
   $('#day-label').textContent = mode === 'practice' ? t('practice') : mode === 'archive' ? `#${archiveDay} · ${t('archive')}` : `#${today}`;
-  $('#question').textContent = t(type === 'intervals' ? 'questionIntervals' : 'questionChords');
+  $('#question').textContent = t(TYPE_TEXT[type].question);
   $('#archive-note').hidden = mode !== 'archive';
   $('#practice-panel').hidden = mode !== 'practice';
   $('#practice-stats').hidden = mode !== 'practice';
@@ -319,11 +335,13 @@ function render() {
   $('#attempts').innerHTML = Array.from({ length: MAX_ATTEMPTS }, (_, i) => {
     const guess = guesses[i];
     if (guess === undefined) return '<li class="attempt empty"></li>';
-    return `<li class="attempt ${evaluateGuess(puzzle, guess)}">${optionName(type, guess)}</li>`;
+    const reveal = justGuessed && i === guesses.length - 1 ? ' reveal' : '';
+    return `<li class="attempt ${evaluateGuess(puzzle, guess)}${reveal}">${optionName(type, guess)}</li>`;
   }).join('');
+  justGuessed = false;
 
   const hints = over || isHard() ? [] : hintsFor(puzzle, misses());
-  $('#hints').innerHTML = hints.map(({ key, family }) => `<li>${t(key, { family: family && t('families')[family] })}</li>`).join('');
+  $('#hints').innerHTML = hints.map(({ key, family, quality }) => `<li>${t(key, { family: family && t('families')[family], quality: quality && t('qualities')[quality] })}</li>`).join('');
 
   renderGrid(over);
 
@@ -352,7 +370,7 @@ function renderGrid(over) {
     }
   }
   for (const button of grid.children) {
-    const id = type === 'intervals' ? Number(button.dataset.option) : button.dataset.option;
+    const id = parseOptionId(button.dataset.option);
     const guessed = game.guesses.includes(id);
     button.className = 'option';
     button.innerHTML = `<strong>${optionName(type, id)}</strong><small>${optionDetail(id)}</small>`;
@@ -367,10 +385,7 @@ function renderResult(current) {
   const { puzzle, guesses } = game;
   const spelled = spellNotes(puzzle);
   $('#result-title').textContent = current === 'won' ? t('winTitles')[guesses.length - 1] : t('lossTitle');
-  $('#result-answer').innerHTML =
-    type === 'intervals'
-      ? t('answer', { ascending: puzzle.ascending, name: optionName(type, puzzle.answer), first: noteName(spelled[0]), second: noteName(spelled[1]) })
-      : t('answerChord', { name: optionName(type, puzzle.answer), symbol: chordSymbol(puzzle.answer, spelled[0]), notes: spelled.map(noteName).join(' · ') });
+  $('#result-answer').innerHTML = answerText(puzzle, spelled);
 
   const song = type === 'intervals' ? songFor(puzzle.answer, puzzle.ascending) : null;
   $('#result-song').hidden = !song;
@@ -383,9 +398,39 @@ function renderResult(current) {
   if (comparing === null) renderKeyboard(null);
 }
 
+function answerText(puzzle, spelled) {
+  if (puzzle.type === 'intervals') {
+    return t('answer', { ascending: puzzle.ascending, name: optionName(type, puzzle.answer), first: noteName(spelled[0]), second: noteName(spelled[1]) });
+  }
+  if (puzzle.type === 'chords') {
+    return t('answerChord', { name: optionName(type, puzzle.answer), symbol: chordSymbol(puzzle.answer, spelled[0]), notes: spelled.map(noteName).join(' · ') });
+  }
+  const quality = chordQuality(puzzle.mode, puzzle.answer);
+  const tonicSymbol = chordSymbol(puzzle.mode === 'major' ? 'major' : 'minor', spelled[0]);
+  const symbol = chordSymbol(quality, spelled[3]);
+  return t('answerHarmony', {
+    numeral: romanNumeral(puzzle.answer, quality),
+    symbol,
+    key: t('keyName', { tonic: pitchName(spelled[0]), mode: puzzle.mode }),
+    progression: `${tonicSymbol} → ${symbol}`,
+  });
+}
+
+// Which keys to light up: the first note (or the I chord) and the rest of the answer.
+function keyboardMarks() {
+  const { puzzle } = game;
+  if (puzzle.type === 'harmony') {
+    const [tonicChord, answerChord] = puzzle.chords;
+    const numeral = optionName('harmony', puzzle.answer);
+    return { first: tonicChord, second: answerChord, label: (f, s) => (f && s ? `I·${numeral}` : f ? 'I' : s ? numeral : '') };
+  }
+  return { first: [puzzle.notes[0]], second: puzzle.notes.slice(1), label: (f, s, midi) => (f || s ? puzzle.notes.indexOf(midi) + 1 : '') };
+}
+
 // Keyboard showing the puzzle notes (and the notes being compared, if any).
 function renderKeyboard(comparison) {
   const { notes } = game.puzzle;
+  const marks = keyboardMarks();
   const extra = (comparison ?? []).filter((n) => !notes.includes(n));
   const all = [...notes, ...extra];
   const low = Math.min(...all);
@@ -396,11 +441,13 @@ function renderKeyboard(comparison) {
   const blacks = [];
   for (let midi = start; midi <= end; midi++) {
     const classes = ['key'];
-    const index = notes.indexOf(midi);
-    if (index === 0) classes.push('first');
-    else if (index > 0) classes.push('second');
+    const inFirst = marks.first.includes(midi);
+    const inSecond = marks.second.includes(midi);
+    if (inFirst && inSecond) classes.push('shared');
+    else if (inFirst) classes.push('first');
+    else if (inSecond) classes.push('second');
     else if (extra.includes(midi)) classes.push('compare');
-    const key = { midi, classes, label: index >= 0 ? index + 1 : '' };
+    const key = { midi, classes, label: marks.label(inFirst, inSecond, midi) };
     if (isBlackKey(midi)) blacks.push({ ...key, after: whites.length });
     else whites.push(key);
   }
@@ -438,12 +485,11 @@ function renderPracticePanel() {
   } else {
     pool = `
       <p class="group-label"><button class="link-button" data-select="all">${t('selectAll')}</button></p>
-      <div class="chips">${GAME_TYPES.chords.options.map((o) => checkbox(o.id)).join('')}</div>`;
+      <div class="chips">${GAME_TYPES[type].options.map((o) => checkbox(o.id)).join('')}</div>`;
   }
 
   const stats = loadPracticeStats();
   const spots = weakSpots(stats, GAME_TYPES[type].options.map((o) => o.id));
-  const parseId = (id) => (type === 'intervals' ? Number(id) : id);
   const spotList = spots.length
     ? `<ul class="weak-spots">${spots
         .map(
@@ -451,7 +497,7 @@ function renderPracticePanel() {
             `<li>${t('weakSpot', {
               name: optionName(type, spot.id),
               accuracy: Math.round(spot.accuracy * 100),
-              confusedWith: spot.confusedWith && optionName(type, parseId(spot.confusedWith)),
+              confusedWith: spot.confusedWith && optionName(type, parseOptionId(spot.confusedWith)),
             })}</li>`,
         )
         .join('')}</ul>`
@@ -466,9 +512,15 @@ function renderPracticePanel() {
           </div></fieldset>`
         : ''
     }
-    <fieldset><legend>${t('playback')}</legend><div class="chips">
-      ${radio('playback', 'melodic', t(type === 'intervals' ? 'playbackMelodicIntervals' : 'playbackMelodicChords'))}${radio('playback', 'harmonic', t('playbackHarmonic'))}
-    </div></fieldset>
+    ${
+      type === 'harmony'
+        ? `<fieldset><legend>${t('keyMode')}</legend><div class="chips">
+            ${radio('keyMode', 'major', t('keyMajor'))}${radio('keyMode', 'minor', t('keyMinor'))}${radio('keyMode', 'both', t('keyBoth'))}
+          </div></fieldset>`
+        : `<fieldset><legend>${t('playback')}</legend><div class="chips">
+            ${radio('playback', 'melodic', t(type === 'intervals' ? 'playbackMelodicIntervals' : 'playbackMelodicChords'))}${radio('playback', 'harmonic', t('playbackHarmonic'))}
+          </div></fieldset>`
+    }
     <label class="toggle-row"><input type="checkbox" name="adaptive"${options.adaptive ? ' checked' : ''} /> ${t('adaptive')}</label>
     <h4>${t('weakSpots')}</h4>
     ${spotList}
@@ -491,16 +543,15 @@ function setupPracticePanel() {
   const body = $('#practice-panel-body');
   body.addEventListener('change', (event) => {
     const input = event.target;
-    const parseId = (id) => (type === 'intervals' ? Number(id) : id);
     if (input.name === 'pool') {
-      const pool = [...body.querySelectorAll('input[name="pool"]:checked')].map((el) => parseId(el.value));
+      const pool = [...body.querySelectorAll('input[name="pool"]:checked')].map((el) => parseOptionId(el.value));
       if (pool.length < 2) {
         input.checked = true;
         showToast(t('needAtLeastTwo'));
         return;
       }
       savePracticeSettings({ pool });
-    } else if (input.name === 'direction' || input.name === 'playback') {
+    } else if (['direction', 'keyMode', 'playback'].includes(input.name)) {
       savePracticeSettings({ [input.name]: input.value });
     } else if (input.name === 'adaptive') {
       savePracticeSettings({ adaptive: input.checked });
@@ -527,9 +578,8 @@ function onOptionClick(id) {
   if (status() !== 'playing') {
     // After the game, the buttons play each answer from the same starting point.
     comparing = id;
-    const notes = notesFor(game.puzzle, id);
-    playNotes(notes, primaryPlayback());
-    renderKeyboard(notes);
+    playSound(primaryPlayback(), id);
+    renderKeyboard(notesFor(game.puzzle, id));
     render();
     return;
   }
@@ -543,6 +593,7 @@ function submitGuess() {
   if (game.guesses.length === 0) game.hard = settings.hard;
   game.guesses = [...game.guesses, selected];
   selected = null;
+  justGuessed = true;
   saveGame();
 
   const result = evaluateGuess(game.puzzle, game.guesses.at(-1));
@@ -553,7 +604,7 @@ function submitGuess() {
       renderPracticePanel();
     }
     render();
-    playNotes(game.puzzle.notes, primaryPlayback());
+    playSound(primaryPlayback());
     $('#result').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
     return;
   }
@@ -575,8 +626,14 @@ function listen(playback, button) {
   if (over) renderKeyboard(null);
   button.classList.add('playing');
   clearTimeout(button.playingTimer);
-  button.playingTimer = setTimeout(() => button.classList.remove('playing'), playNotes(game.puzzle.notes, playback) * 1000);
+  button.playingTimer = setTimeout(() => button.classList.remove('playing'), playSound(playback) * 1000);
   render();
+}
+
+// Plays the puzzle (or, after the game, another answer from the same start).
+function playSound(playback, optionId) {
+  const { groups, gap } = soundFor(game.puzzle, playback, optionId);
+  return playGroups(groups, gap);
 }
 
 function setupAudioButtons() {
@@ -587,8 +644,8 @@ function setupAudioButtons() {
 // Sharing and countdown
 
 async function share() {
-  const title = type === 'intervals' ? APP_NAME : `${APP_NAME} ${t('typeChords')}`;
-  const url = `${location.origin}${location.pathname}${type === 'chords' ? '#chords' : ''}`;
+  const title = type === 'intervals' ? APP_NAME : `${APP_NAME} ${typeName()}`;
+  const url = `${location.origin}${location.pathname}${hashFor({ type, mode: 'daily' })}`;
   const text = `${shareText(game.puzzle, game.guesses, { title, hard: game.hard, highContrast: settings.highContrast })}\n${url}`;
   if (matchMedia('(pointer: coarse)').matches && navigator.share) {
     try {

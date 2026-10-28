@@ -53,6 +53,37 @@ export const CHORDS = [
   { id: 'minor7', offsets: [0, 3, 7, 10], family: 'minorThird' },
 ];
 
+// Harmony: the diatonic chords of a key. Natural minor, as in the usual
+// "campo harmônico menor natural": i ii° III iv v VI VII.
+export const SCALES = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10] };
+
+// The answer is the degree of the second chord (the first is always I).
+// Degrees are grouped by harmonic function.
+export const DEGREES = [
+  { id: 2, family: 'subdominant' },
+  { id: 3, family: 'tonic' },
+  { id: 4, family: 'subdominant' },
+  { id: 5, family: 'dominant' },
+  { id: 6, family: 'tonic' },
+  { id: 7, family: 'dominant' },
+];
+
+// Tonic range for harmony puzzles, so every chord stays within the samples.
+const LOWEST_TONIC = 53;
+const HIGHEST_TONIC = 62;
+
+export function triad(tonic, mode, degree) {
+  const scale = SCALES[mode];
+  const note = (step) => tonic + scale[step % 7] + 12 * Math.floor(step / 7);
+  return [note(degree - 1), note(degree + 1), note(degree + 3)];
+}
+
+export function chordQuality(mode, degree) {
+  const [root, third, fifth] = triad(0, mode, degree);
+  if (third - root === 4) return 'major';
+  return fifth - root === 6 ? 'diminished' : 'minor';
+}
+
 export const GAME_TYPES = {
   intervals: {
     id: 'intervals',
@@ -69,6 +100,15 @@ export const GAME_TYPES = {
     seedSalt: 0x27d4eb2f,
     options: CHORDS,
     dailyPool: CHORDS.map((c) => c.id),
+    playback: 'harmonic',
+  },
+  harmony: {
+    id: 'harmony',
+    emoji: '🎼',
+    seedSalt: 0x165667b1,
+    options: DEGREES,
+    dailyPool: DEGREES.map((d) => d.id),
+    // 'harmonic' plays the two chords; 'melodic' plays just their bass notes.
     playback: 'harmonic',
   },
 };
@@ -94,6 +134,10 @@ function spell(midi, letter) {
 }
 
 function letterSteps(puzzle) {
+  if (puzzle.type === 'harmony') {
+    const second = puzzle.answer - 1;
+    return [0, 2, 4, second, second + 2, second + 4];
+  }
   if (puzzle.type === 'intervals') {
     const steps = puzzle.answer > 12 ? INTERVAL_STEPS[puzzle.answer - 12] + 7 : INTERVAL_STEPS[puzzle.answer];
     return [0, puzzle.ascending ? steps : -steps];
@@ -104,15 +148,20 @@ function letterSteps(puzzle) {
 
 // Spells the puzzle's notes as { letter (0 = C … 6 = B), accidental (-2…2), octave },
 // trying each way of writing the first note and keeping the one with fewest accidentals.
+// For harmony, the whole scale counts, so the key is written the usual way (B♭ major, not A♯).
 export function spellNotes(puzzle) {
-  const steps = letterSteps(puzzle);
-  const first = puzzle.notes[0];
+  let notes = puzzle.notes;
+  let steps = letterSteps(puzzle);
+  if (puzzle.type === 'harmony') {
+    notes = [...notes, ...SCALES[puzzle.mode].map((offset) => puzzle.tonic + offset)];
+    steps = [...steps, 0, 1, 2, 3, 4, 5, 6];
+  }
   const candidates = [0, 1, 2, 3, 4, 5, 6]
-    .map((letter) => spell(first, letter))
+    .map((letter) => spell(notes[0], letter))
     .filter((s) => Math.abs(s.accidental) <= 1)
-    .map((start) => puzzle.notes.map((midi, i) => spell(midi, start.letter + steps[i])));
+    .map((start) => notes.map((midi, i) => spell(midi, start.letter + steps[i])));
   const cost = (spelling) => spelling.reduce((sum, s) => sum + Math.abs(s.accidental) + (Math.abs(s.accidental) > 1 ? 3 : 0), 0);
-  return candidates.reduce((best, c) => (cost(c) < cost(best) ? c : best));
+  return candidates.reduce((best, c) => (cost(c) < cost(best) ? c : best)).slice(0, puzzle.notes.length);
 }
 
 export function isBlackKey(midi) {
@@ -141,8 +190,15 @@ function rngForDay(type, day) {
   return mulberry32(Math.imul(day, 0x9e3779b9) ^ 0x85ebca6b ^ GAME_TYPES[type].seedSalt);
 }
 
-// Places the answer on the keyboard: picks the starting note (and direction).
-function place(type, answer, rand, ascendingChance) {
+// Places the answer on the keyboard: picks the starting note (and direction,
+// or for harmony the key: `keyMode` is 'major', 'minor' or 'both').
+function place(type, answer, rand, { ascendingChance = 0.5, keyMode = 'both' } = {}) {
+  if (type === 'harmony') {
+    const mode = keyMode === 'both' ? (rand() < 0.5 ? 'major' : 'minor') : keyMode;
+    const tonic = LOWEST_TONIC + Math.floor(rand() * (HIGHEST_TONIC - LOWEST_TONIC + 1));
+    const chords = [triad(tonic, mode, 1), triad(tonic, mode, answer)];
+    return { type, answer, mode, tonic, chords, notes: chords.flat() };
+  }
   if (type === 'intervals') {
     const ascending = rand() < ascendingChance;
     const low = LOWEST_NOTE + Math.floor(rand() * (HIGHEST_NOTE - answer - LOWEST_NOTE + 1));
@@ -168,12 +224,16 @@ export function puzzleForDay(type, day) {
     answer = options[Math.floor(rand() * options.length)];
     previous = answer;
   }
-  return { day, ...place(type, answer, rand, 0.7) };
+  return { day, ...place(type, answer, rand, { ascendingChance: 0.7 }) };
 }
 
 // Random puzzle for practice. `weights` (id → number) favors some answers;
-// `direction` is 'up', 'down' or 'both' (intervals only).
-export function randomPuzzle(type, { pool = GAME_TYPES[type].dailyPool, previous = null, weights = null, direction = 'both', rand = Math.random } = {}) {
+// `direction` is 'up', 'down' or 'both' (intervals only); `keyMode` is
+// 'major', 'minor' or 'both' (harmony only).
+export function randomPuzzle(
+  type,
+  { pool = GAME_TYPES[type].dailyPool, previous = null, weights = null, direction = 'both', keyMode = 'both', rand = Math.random } = {},
+) {
   const candidates = pool.length > 1 ? pool.filter((id) => id !== previous) : pool;
   const weightOf = (id) => (weights ? weights[id] ?? 1 : 1);
   let target = rand() * candidates.reduce((sum, id) => sum + weightOf(id), 0);
@@ -186,17 +246,31 @@ export function randomPuzzle(type, { pool = GAME_TYPES[type].dailyPool, previous
     }
   }
   const ascendingChance = { up: 1, down: 0, both: 0.5 }[direction];
-  return { day: null, ...place(type, answer, rand, ascendingChance) };
+  return { day: null, ...place(type, answer, rand, { ascendingChance, keyMode }) };
 }
 
 // The notes a given option would produce from the same starting point as the
 // puzzle (used to compare answers after the game).
 export function notesFor(puzzle, optionId) {
+  if (puzzle.type === 'harmony') return triad(puzzle.tonic, puzzle.mode, optionId);
   if (puzzle.type === 'intervals') {
     const first = puzzle.notes[0];
     return [first, puzzle.ascending ? first + optionId : first - optionId];
   }
   return optionById(puzzle.type, optionId).offsets.map((o) => puzzle.root + o);
+}
+
+// What to play, as groups of notes sounding together, `gap` seconds apart.
+// `optionId` plays another answer from the same starting point.
+export function soundFor(puzzle, playback, optionId = puzzle.answer) {
+  if (puzzle.type === 'harmony') {
+    const chords = [puzzle.chords[0], notesFor(puzzle, optionId)];
+    if (playback === 'melodic') return { groups: chords.map((chord) => [chord[0] - 12]), gap: 0.9 };
+    return { groups: chords, gap: 1.3 };
+  }
+  const notes = notesFor(puzzle, optionId);
+  if (playback === 'melodic') return { groups: notes.map((n) => [n]), gap: notes.length > 2 ? 0.55 : 0.9 };
+  return { groups: [notes], gap: 0 };
 }
 
 // 'correct' = right; 'close' = wrong but same family; 'wrong' = wrong.
@@ -210,7 +284,10 @@ export function evaluateGuess(puzzle, guess) {
 export function hintsFor(puzzle, misses) {
   const answer = optionById(puzzle.type, puzzle.answer);
   const hints = [];
-  if (puzzle.type === 'intervals') {
+  if (puzzle.type === 'harmony') {
+    if (misses >= 1) hints.push({ key: 'hintBass' }, { key: puzzle.mode === 'major' ? 'hintMajorKey' : 'hintMinorKey' });
+    if (misses >= 2) hints.push({ key: 'hintQuality', quality: chordQuality(puzzle.mode, puzzle.answer) });
+  } else if (puzzle.type === 'intervals') {
     if (misses >= 1) hints.push({ key: 'hintTogether' });
     if (misses >= 2) {
       const size = answer.compound ? 'hintCompound' : answer.semitones <= 6 ? 'hintSmall' : 'hintLarge';

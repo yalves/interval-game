@@ -418,6 +418,9 @@ a {
 .attempt.wrong {
   border-color: transparent;
   color: #fff;
+}
+
+.attempt.reveal {
   animation: flip 0.4s ease;
 }
 
@@ -671,6 +674,16 @@ a {
 
 .key.compare {
   background: var(--compare);
+}
+
+/* A note in both the I chord and the answer chord. */
+.key.shared {
+  background: linear-gradient(90deg, var(--first) 50%, var(--second) 50%);
+}
+
+.option-grid.harmony strong {
+  font-size: 1.3rem;
+  font-family: Georgia, 'Times New Roman', serif;
 }
 
 /* Modals */

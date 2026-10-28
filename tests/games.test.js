@@ -15,7 +15,10 @@ import {
   puzzleForDay,
   randomPuzzle,
   shareText,
+  soundFor,
   spellNotes,
+  chordQuality,
+  triad,
 } from '../js/games.js';
 
 const inRange = (note) => note >= LOWEST_NOTE && note <= HIGHEST_NOTE;
@@ -45,7 +48,7 @@ for (const type of Object.keys(GAME_TYPES)) {
       const puzzle = puzzleForDay(type, day);
       assert.deepEqual(puzzle, puzzleForDay(type, day));
       assert.ok(puzzle.notes.every(inRange));
-      assert.deepEqual(notesFor(puzzle, puzzle.answer), puzzle.notes);
+      assert.deepEqual(notesFor(puzzle, puzzle.answer), type === 'harmony' ? puzzle.chords[1] : puzzle.notes);
       assert.notEqual(puzzle.answer, previous);
       previous = puzzle.answer;
       seen.add(puzzle.answer);
@@ -133,4 +136,33 @@ test('spellNotes writes notes the way the interval or chord is named', () => {
       assert.ok(spelled.every((s) => Math.abs(s.accidental) <= 1), `${type} day ${day}: ${name(spelled)}`);
     }
   }
+});
+
+test('harmony: diatonic chords, sounds, hints and families', () => {
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 7].map((d) => chordQuality('major', d)), ['major', 'minor', 'minor', 'major', 'major', 'minor', 'diminished']);
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 7].map((d) => chordQuality('minor', d)), ['minor', 'diminished', 'major', 'minor', 'minor', 'major', 'major']);
+  assert.deepEqual(triad(60, 'major', 7), [71, 74, 77]);
+  assert.deepEqual(triad(57, 'minor', 6), [65, 69, 72]);
+
+  const puzzle = { type: 'harmony', day: 1, answer: 5, mode: 'major', tonic: 60, chords: [[60, 64, 67], [67, 71, 74]], notes: [60, 64, 67, 67, 71, 74] };
+  assert.deepEqual(soundFor(puzzle, 'harmonic'), { groups: [[60, 64, 67], [67, 71, 74]], gap: 1.3 });
+  assert.deepEqual(soundFor(puzzle, 'melodic'), { groups: [[48], [55]], gap: 0.9 });
+  assert.deepEqual(soundFor(puzzle, 'harmonic', 4).groups[1], [65, 69, 72]);
+  assert.equal(evaluateGuess(puzzle, 7), 'close'); // both dominant
+  assert.equal(evaluateGuess(puzzle, 6), 'wrong');
+  assert.deepEqual(hintsFor(puzzle, 3), [
+    { key: 'hintBass' },
+    { key: 'hintMajorKey' },
+    { key: 'hintQuality', quality: 'major' },
+    { key: 'hintFamily', family: 'dominant' },
+  ]);
+  assert.equal(hintsFor({ ...puzzle, mode: 'minor' }, 1)[1].key, 'hintMinorKey');
+  assert.equal(shareText(puzzle, [5], { title: 'Musicle Harmony' }), `Musicle Harmony #1 1/${MAX_ATTEMPTS}\n🎼 🟩`);
+
+  // The key is spelled the usual way: B♭ major (not A♯), with E♭ in its IV chord.
+  const name = (spelling) => spelling.map(({ letter, accidental }) => `${'CDEFGAB'[letter]}${{ '-1': 'b', 0: '', 1: '#' }[accidental]}`).join(' ');
+  const bFlat = { type: 'harmony', answer: 4, mode: 'major', tonic: 58, chords: [triad(58, 'major', 1), triad(58, 'major', 4)] };
+  assert.equal(name(spellNotes({ ...bFlat, notes: bFlat.chords.flat() })), 'Bb D F Eb G Bb');
+  const cSharpMinor = { type: 'harmony', answer: 7, mode: 'minor', tonic: 61, chords: [triad(61, 'minor', 1), triad(61, 'minor', 7)] };
+  assert.equal(name(spellNotes({ ...cSharpMinor, notes: cSharpMinor.chords.flat() })), 'C# E G# B D# F#');
 });

@@ -22,16 +22,24 @@ export const STRINGS = {
     gameType: 'Game',
     typeIntervals: 'Intervals',
     typeChords: 'Chords',
+    typeHarmony: 'Harmony',
     gameMode: 'Game mode',
     daily: 'Daily',
     practice: 'Practice',
     questionIntervals: "What's the interval between the two notes?",
     questionChords: 'Which chord is this?',
+    questionHarmony: 'After the I chord, which degree is the second chord?',
     practiceStats: '{wins}/{played} correct · Streak {streak} · Best {best}',
     playIntervalsMelodic: 'Play notes',
     playIntervalsHarmonic: 'Play together',
     playChordsHarmonic: 'Play chord',
     playChordsMelodic: 'Play arpeggio',
+    playHarmonyHarmonic: 'Play chords',
+    playHarmonyMelodic: 'Play bass line',
+    degree: ({ n }) => `${n}${{ 2: 'nd', 3: 'rd' }[n] ?? 'th'} degree`,
+    keyName: ({ tonic, mode }) => `${tonic} ${mode}`,
+    answerHarmony: ({ numeral, symbol, key, progression }) =>
+      `The answer was <strong>${numeral}</strong> (${symbol}) in ${key}: ${progression}.`,
     listensLeft: ({ count }) => (count === 1 ? '1 listen left' : `${count} listens left`),
     noListensLeft: 'No listens left in hard mode.',
     guesses: 'Guesses',
@@ -70,6 +78,11 @@ export const STRINGS = {
     hintArpeggio: 'You can now hear the chord one note at a time.',
     hintTriad: 'It has 3 notes (a triad).',
     hintSeventh: 'It has 4 notes (a seventh chord).',
+    hintBass: 'You can now hear just the bass line.',
+    hintMajorKey: 'The key is major.',
+    hintMinorKey: 'The key is minor (natural minor).',
+    hintQuality: 'The second chord is {quality}.',
+    qualities: { major: 'major', minor: 'minor', diminished: 'diminished' },
     hintFamily: "It's {family}.",
     families: {
       perfect: 'a perfect consonance',
@@ -78,6 +91,9 @@ export const STRINGS = {
       majorThird: 'a chord with a major third',
       minorThird: 'a chord with a minor third',
       suspended: 'a suspended chord (no third)',
+      tonic: 'a tonic-function chord',
+      subdominant: 'a subdominant-function chord',
+      dominant: 'a dominant-function chord',
     },
     intervals: [
       'Minor 2nd',
@@ -148,6 +164,10 @@ export const STRINGS = {
     directionUp: 'Ascending',
     directionDown: 'Descending',
     directionBoth: 'Both',
+    keyMode: 'Key',
+    keyMajor: 'Major',
+    keyMinor: 'Minor',
+    keyBoth: 'Both',
     playback: 'Playback',
     playbackMelodicIntervals: 'One after another',
     playbackMelodicChords: 'Arpeggio',
@@ -179,7 +199,7 @@ export const STRINGS = {
       'Sounds: <a href="https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html">Salamander Grand Piano</a> by Alexander Holm and a nylon guitar from <a href="https://github.com/nbrosowsky/tonejs-instruments">tonejs-instruments</a>, under <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.',
     help: `
       <h2>How to play</h2>
-      <p>Every day there are two new puzzles. In <strong>Intervals</strong>, listen to two piano notes and name the distance between them. In <strong>Chords</strong>, name the type of chord. You have <strong>4 guesses</strong>.</p>
+      <p>Every day there are three new puzzles. In <strong>Intervals</strong>, listen to two piano notes and name the distance between them. In <strong>Chords</strong>, name the type of chord. In <strong>Harmony</strong>, you hear the I chord of a key and then another chord from the same key: name its degree (II to VII). You have <strong>4 guesses</strong>.</p>
       <p>An interval is measured in semitones: each neighboring key on the piano, white or black, is one semitone. The second note can be higher or lower than the first.</p>
       <h3>Colors</h3>
       <ul class="legend">
@@ -193,6 +213,7 @@ export const STRINGS = {
         <li><strong>Imperfect consonances:</strong> 3rds and 6ths.</li>
         <li><strong>Dissonances:</strong> 2nds, 7ths and the tritone.</li>
         <li><strong>Chords</strong> are grouped by their third: major (major, augmented, dominant 7th, major 7th), minor (minor, diminished, minor 7th) or none (sus2, sus4).</li>
+        <li><strong>Degrees</strong> are grouped by harmonic function: tonic (III, VI), subdominant (II, IV) and dominant (V, VII). Minor keys use the natural minor scale.</li>
       </ul>
       <h3>Hints</h3>
       <p>Each miss unlocks a new hint: another way to listen, then the size of the interval (or the number of notes in the chord), and finally its family.</p>
@@ -212,16 +233,24 @@ export const STRINGS = {
     gameType: 'Jogo',
     typeIntervals: 'Intervalos',
     typeChords: 'Acordes',
+    typeHarmony: 'Harmonia',
     gameMode: 'Modo de jogo',
     daily: 'Diário',
     practice: 'Treino',
     questionIntervals: 'Qual é o intervalo entre as duas notas?',
     questionChords: 'Que acorde é este?',
+    questionHarmony: 'Depois do acorde I, qual é o grau do segundo acorde?',
     practiceStats: '{wins}/{played} acertos · Sequência {streak} · Melhor {best}',
     playIntervalsMelodic: 'Ouvir notas',
     playIntervalsHarmonic: 'Ouvir juntas',
     playChordsHarmonic: 'Ouvir acorde',
     playChordsMelodic: 'Ouvir arpejo',
+    playHarmonyHarmonic: 'Ouvir acordes',
+    playHarmonyMelodic: 'Ouvir baixo',
+    degree: ({ n }) => `${n}º grau`,
+    keyName: ({ tonic, mode }) => `${tonic} ${mode === 'major' ? 'maior' : 'menor'}`,
+    answerHarmony: ({ numeral, symbol, key, progression }) =>
+      `A resposta era <strong>${numeral}</strong> (${symbol}) no campo harmônico de ${key}: ${progression}.`,
     listensLeft: ({ count }) => (count === 1 ? 'Resta 1 audição' : `Restam ${count} audições`),
     noListensLeft: 'Sem audições restantes no modo difícil.',
     guesses: 'Tentativas',
@@ -260,6 +289,11 @@ export const STRINGS = {
     hintArpeggio: 'Agora você pode ouvir o acorde nota por nota.',
     hintTriad: 'Ele tem 3 notas (uma tríade).',
     hintSeventh: 'Ele tem 4 notas (um acorde com sétima).',
+    hintBass: 'Agora você pode ouvir só o baixo.',
+    hintMajorKey: 'O campo harmônico é maior.',
+    hintMinorKey: 'O campo harmônico é menor (menor natural).',
+    hintQuality: 'O segundo acorde é {quality}.',
+    qualities: { major: 'maior', minor: 'menor', diminished: 'diminuto' },
     hintFamily: 'É {family}.',
     families: {
       perfect: 'uma consonância perfeita',
@@ -268,6 +302,9 @@ export const STRINGS = {
       majorThird: 'um acorde com terça maior',
       minorThird: 'um acorde com terça menor',
       suspended: 'um acorde suspenso (sem terça)',
+      tonic: 'um acorde de função tônica',
+      subdominant: 'um acorde de função subdominante',
+      dominant: 'um acorde de função dominante',
     },
     intervals: [
       '2ª menor',
@@ -337,6 +374,10 @@ export const STRINGS = {
     directionUp: 'Ascendente',
     directionDown: 'Descendente',
     directionBoth: 'Ambas',
+    keyMode: 'Campo harmônico',
+    keyMajor: 'Maior',
+    keyMinor: 'Menor',
+    keyBoth: 'Ambos',
     playback: 'Reprodução',
     playbackMelodicIntervals: 'Uma depois da outra',
     playbackMelodicChords: 'Arpejo',
@@ -368,7 +409,7 @@ export const STRINGS = {
       'Sons: <a href="https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html">Salamander Grand Piano</a>, de Alexander Holm, e um violão de nylon do <a href="https://github.com/nbrosowsky/tonejs-instruments">tonejs-instruments</a>, sob a licença <a href="https://creativecommons.org/licenses/by/3.0/deed.pt_BR">CC BY 3.0</a>.',
     help: `
       <h2>Como jogar</h2>
-      <p>Todo dia há dois desafios novos. Em <strong>Intervalos</strong>, ouça duas notas de piano e descubra a distância entre elas. Em <strong>Acordes</strong>, descubra o tipo de acorde. Você tem <strong>4 tentativas</strong>.</p>
+      <p>Todo dia há três desafios novos. Em <strong>Intervalos</strong>, ouça duas notas de piano e descubra a distância entre elas. Em <strong>Acordes</strong>, descubra o tipo de acorde. Em <strong>Harmonia</strong>, você ouve o acorde I de um campo harmônico e depois outro acorde do mesmo campo: descubra o grau dele (II a VII). Você tem <strong>4 tentativas</strong>.</p>
       <p>Um intervalo é medido em semitons: cada tecla vizinha no piano, branca ou preta, é um semitom. A segunda nota pode ser mais aguda ou mais grave que a primeira.</p>
       <h3>Cores</h3>
       <ul class="legend">
@@ -382,6 +423,7 @@ export const STRINGS = {
         <li><strong>Consonâncias imperfeitas:</strong> 3ªs e 6ªs.</li>
         <li><strong>Dissonâncias:</strong> 2ªs, 7ªs e trítono.</li>
         <li><strong>Acordes</strong> são agrupados pela terça: maior (maior, aumentado, sétima, sétima maior), menor (menor, diminuto, menor com sétima) ou nenhuma (sus2, sus4).</li>
+        <li><strong>Graus</strong> são agrupados pela função harmônica: tônica (III, VI), subdominante (II, IV) e dominante (V, VII). O campo harmônico menor é o menor natural.</li>
       </ul>
       <h3>Dicas</h3>
       <p>Cada erro libera uma dica nova: outro jeito de ouvir, depois o tamanho do intervalo (ou o número de notas do acorde) e, por fim, a família.</p>
@@ -410,8 +452,23 @@ export function t(key, params = {}) {
   return value;
 }
 
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+
 export function optionName(type, id) {
+  if (type === 'harmony') return ROMAN[id - 1];
   return type === 'intervals' ? t('intervals')[id - 1] : t('chords')[id];
+}
+
+// Roman numeral written the usual way: uppercase for major, lowercase for minor, ° for diminished.
+export function romanNumeral(degree, quality) {
+  const numeral = ROMAN[degree - 1];
+  if (quality === 'major') return numeral;
+  return `${numeral.toLowerCase()}${quality === 'diminished' ? '°' : ''}`;
+}
+
+// A spelled pitch without octave, e.g. "B♭" or "Si♭".
+export function pitchName({ letter, accidental }) {
+  return `${t('notes')[letter]}${ACCIDENTALS[accidental]}`;
 }
 
 // A spelled note ({ letter, accidental, octave }, see spellNotes) as text, e.g. "A♭4".
