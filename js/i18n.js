@@ -85,15 +85,15 @@ export const STRINGS = {
     qualities: { major: 'major', minor: 'minor', diminished: 'diminished' },
     hintFamily: "It's {family}.",
     families: {
-      perfect: 'a perfect consonance',
-      imperfect: 'an imperfect consonance',
-      dissonant: 'a dissonance',
-      majorThird: 'a chord with a major third',
-      minorThird: 'a chord with a minor third',
-      suspended: 'a suspended chord (no third)',
-      tonic: 'a tonic-function chord',
-      subdominant: 'a subdominant-function chord',
-      dominant: 'a dominant-function chord',
+      perfect: 'a perfect consonance: an open, stable sound',
+      imperfect: 'an imperfect consonance: a sweet, pleasant sound',
+      dissonant: 'a dissonance: a clashing, tense sound',
+      majorThird: 'a chord with a major third: it sounds bright',
+      minorThird: 'a chord with a minor third: it sounds dark',
+      suspended: 'a suspended chord: neither happy nor sad',
+      tonic: 'a tonic-function chord: it feels like home',
+      subdominant: 'a subdominant-function chord: it moves away from home',
+      dominant: 'a dominant-function chord: tension that wants to go home',
     },
     intervals: [
       'Minor 2nd',
@@ -134,6 +134,46 @@ export const STRINGS = {
     },
     chordSymbols: { major: '', minor: 'm', diminished: '°', augmented: '+', sus2: 'sus2', sus4: 'sus4', dominant7: '7', major7: 'maj7', minor7: 'm7' },
     // Well-known songs that start with each interval (by semitones).
+    // Short versions for the answer buttons (same songs as `songs`).
+    songsShort: {
+      1: { up: 'Jaws', down: 'Joy to the World' },
+      2: { up: 'Happy Birthday', down: 'Mary Had a Little Lamb' },
+      3: { up: 'Greensleeves', down: 'Hey Jude' },
+      4: { up: 'When the Saints', down: 'Swing Low' },
+      5: { up: 'Here Comes the Bride', down: 'Mozart Serenade' },
+      6: { up: 'The Simpsons' },
+      7: { up: 'Twinkle, Twinkle', down: 'The Flintstones' },
+      8: { up: 'The Entertainer', down: 'Love Story' },
+      9: { up: 'My Bonnie', down: 'Nobody Knows' },
+      10: { up: 'Star Trek' },
+      11: { up: 'Take On Me' },
+      12: { up: 'Over the Rainbow' },
+    },
+    plusOctave: '{song} + an octave',
+    // How each chord type and each degree tends to feel.
+    chordFeelings: {
+      major: 'Happy',
+      minor: 'Sad',
+      diminished: 'Tense',
+      augmented: 'Mysterious',
+      sus2: 'Open',
+      sus4: 'Unresolved',
+      dominant7: 'Bluesy',
+      major7: 'Dreamy',
+      minor7: 'Mellow',
+    },
+    degreeFeelings: {
+      2: 'Setting off',
+      3: 'Gentle detour',
+      4: 'Opening up',
+      5: 'Wants to go home',
+      6: 'Change of mood',
+      7: 'On the edge',
+    },
+    answerWithKeyboard: '🎹 Play it',
+    answerWithList: '☰ List',
+    answerWith: 'How to answer',
+    keyboardHelp: 'Tap the key of the second note. The first one is marked.',
     songs: {
       1: { up: 'Jaws (theme)', down: 'Joy to the World' },
       2: { up: 'Happy Birthday', down: 'Mary Had a Little Lamb' },
@@ -144,7 +184,7 @@ export const STRINGS = {
       7: { up: 'Twinkle, Twinkle, Little Star', down: 'The Flintstones (theme)' },
       8: { up: 'The Entertainer', down: 'Love Story (theme)' },
       9: { up: 'My Bonnie Lies Over the Ocean', down: "Nobody Knows the Trouble I've Seen" },
-      10: { up: 'Somewhere (West Side Story)' },
+      10: { up: 'Star Trek (original theme)' },
       11: { up: 'Take On Me (chorus)' },
       12: { up: 'Over the Rainbow' },
     },
@@ -221,6 +261,8 @@ export const STRINGS = {
       <p>Only 3 listens and no hints. Your result gets a * when shared.</p>
       <h3>Practice and archive</h3>
       <p>Switch to <strong>Practice</strong> for unlimited puzzles, choosing what to include. It focuses on the answers you miss most. Missed a day? Play it from the <strong>archive</strong> in the statistics.</p>
+      <h3>No theory needed</h3>
+      <p>Each answer shows something familiar first (the song that starts with that jump, or how the chord feels) and its music theory name below. In <strong>Intervals</strong> you can also answer by tapping the second note on the keyboard (🎹 Play it).</p>
       <p class="muted">Shortcuts: <kbd>Space</kbd> plays, <kbd>1</kbd>–<kbd>9</kbd> and <kbd>0</kbd> or the arrow keys pick an answer, <kbd>Enter</kbd> submits.</p>`,
   },
 
@@ -296,15 +338,15 @@ export const STRINGS = {
     qualities: { major: 'maior', minor: 'menor', diminished: 'diminuto' },
     hintFamily: 'É {family}.',
     families: {
-      perfect: 'uma consonância perfeita',
-      imperfect: 'uma consonância imperfeita',
-      dissonant: 'uma dissonância',
-      majorThird: 'um acorde com terça maior',
-      minorThird: 'um acorde com terça menor',
-      suspended: 'um acorde suspenso (sem terça)',
-      tonic: 'um acorde de função tônica',
-      subdominant: 'um acorde de função subdominante',
-      dominant: 'um acorde de função dominante',
+      perfect: 'uma consonância perfeita: um som aberto e estável',
+      imperfect: 'uma consonância imperfeita: um som doce e agradável',
+      dissonant: 'uma dissonância: um som que choca, tenso',
+      majorThird: 'um acorde com terça maior: soa claro',
+      minorThird: 'um acorde com terça menor: soa escuro',
+      suspended: 'um acorde suspenso: nem alegre nem triste',
+      tonic: 'um acorde de função tônica: soa como estar em casa',
+      subdominant: 'um acorde de função subdominante: se afasta de casa',
+      dominant: 'um acorde de função dominante: tensão que quer voltar pra casa',
     },
     intervals: [
       '2ª menor',
@@ -344,6 +386,44 @@ export const STRINGS = {
       minor7: 'Menor com sétima',
     },
     chordSymbols: { major: '', minor: 'm', diminished: '°', augmented: '+', sus2: 'sus2', sus4: 'sus4', dominant7: '7', major7: '7M', minor7: 'm7' },
+    songsShort: {
+      1: { up: 'Tubarão', down: 'Joy to the World' },
+      2: { up: 'Parabéns pra Você', down: 'Mary Had a Little Lamb' },
+      3: { up: 'Greensleeves', down: 'Hey Jude' },
+      4: { up: 'When the Saints', down: 'Swing Low' },
+      5: { up: 'Marcha Nupcial', down: 'Serenata de Mozart' },
+      6: { up: 'Os Simpsons' },
+      7: { up: 'Brilha, Brilha', down: 'Os Flintstones' },
+      8: { up: 'The Entertainer', down: 'Love Story' },
+      9: { up: 'My Bonnie', down: 'Nobody Knows' },
+      10: { up: 'Jornada nas Estrelas' },
+      11: { up: 'Take On Me' },
+      12: { up: 'Over the Rainbow' },
+    },
+    plusOctave: '{song} + uma oitava',
+    chordFeelings: {
+      major: 'Alegre',
+      minor: 'Triste',
+      diminished: 'Tenso',
+      augmented: 'Misterioso',
+      sus2: 'Aberto',
+      sus4: 'Sem resolver',
+      dominant7: 'Blues',
+      major7: 'Sonhador',
+      minor7: 'Suave',
+    },
+    degreeFeelings: {
+      2: 'Saindo de casa',
+      3: 'Desvio suave',
+      4: 'Abrindo',
+      5: 'Quer voltar pra casa',
+      6: 'Mudança de clima',
+      7: 'No limite',
+    },
+    answerWithKeyboard: '🎹 Tocar',
+    answerWithList: '☰ Lista',
+    answerWith: 'Como responder',
+    keyboardHelp: 'Toque a tecla da segunda nota. A primeira está marcada.',
     songs: {
       1: { up: 'Tubarão (tema)', down: 'Joy to the World' },
       2: { up: 'Parabéns pra Você', down: 'Mary Had a Little Lamb' },
@@ -354,7 +434,7 @@ export const STRINGS = {
       7: { up: 'Brilha, Brilha, Estrelinha', down: 'Os Flintstones (abertura)' },
       8: { up: 'The Entertainer', down: 'Love Story (tema)' },
       9: { up: 'My Bonnie Lies Over the Ocean', down: "Nobody Knows the Trouble I've Seen" },
-      10: { up: 'Somewhere (Amor, Sublime Amor)' },
+      10: { up: 'Jornada nas Estrelas (tema original)' },
       11: { up: 'Take On Me (refrão)' },
       12: { up: 'Over the Rainbow (O Mágico de Oz)' },
     },
@@ -431,6 +511,8 @@ export const STRINGS = {
       <p>Só 3 audições e nenhuma dica. Seu resultado ganha um * ao ser compartilhado.</p>
       <h3>Treino e arquivo</h3>
       <p>Mude para <strong>Treino</strong> para jogar sem limites, escolhendo o que incluir. Ele foca nas respostas que você mais erra. Perdeu um dia? Jogue pelo <strong>arquivo</strong> nas estatísticas.</p>
+      <h3>Sem precisar de teoria</h3>
+      <p>Cada resposta mostra primeiro algo conhecido (a música que começa com aquele salto, ou a sensação do acorde) e, embaixo, o nome na teoria musical. Em <strong>Intervalos</strong> você também pode responder tocando a segunda nota no teclado (🎹 Tocar).</p>
       <p class="muted">Atalhos: <kbd>Espaço</kbd> toca, <kbd>1</kbd>–<kbd>9</kbd> e <kbd>0</kbd> ou as setas escolhem uma resposta, <kbd>Enter</kbd> confirma.</p>`,
   },
 };
@@ -479,6 +561,36 @@ export function noteName({ letter, accidental, octave }) {
 // Chord symbols always use letter names (C, Dm7...), as Brazilian musicians do too.
 export function chordSymbol(id, root = { letter: 0, accidental: 0 }) {
   return `${LETTERS[root.letter]}${ACCIDENTALS[root.accidental]}${t('chordSymbols')[id]}`;
+}
+
+// Emoji shown with each answer, next to its friendly label.
+const INTERVAL_EMOJI = {
+  1: { up: '🦈', down: '🎄' },
+  2: { up: '🎂', down: '🐑' },
+  3: { up: '🌿', down: '🎸' },
+  4: { up: '🎺', down: '🙏' },
+  5: { up: '👰', down: '🎻' },
+  6: { up: '🍩' },
+  7: { up: '⭐', down: '🦴' },
+  8: { up: '🎩', down: '💌' },
+  9: { up: '🌊', down: '🎶' },
+  10: { up: '🖖' },
+  11: { up: '🎤' },
+  12: { up: '🌈' },
+};
+const CHORD_EMOJI = { major: '☀️', minor: '🌧️', diminished: '😬', augmented: '🌀', sus2: '☁️', sus4: '⏳', dominant7: '🎷', major7: '🌅', minor7: '🌙' };
+const DEGREE_EMOJI = { 2: '🚶', 3: '🌫️', 4: '🌄', 5: '🧲', 6: '🍂', 7: '⚡' };
+
+// Friendly label for an answer: the song that starts with that interval (in the
+// puzzle's direction when there is one), or how the chord or degree feels.
+export function optionFeel(type, id, ascending = true) {
+  if (type === 'chords') return { emoji: CHORD_EMOJI[id], text: t('chordFeelings')[id] };
+  if (type === 'harmony') return { emoji: DEGREE_EMOJI[id], text: t('degreeFeelings')[id] };
+  const simple = id > 12 ? id - 12 : id;
+  const songs = t('songsShort')[simple];
+  const direction = !ascending && songs.down ? 'down' : 'up';
+  const song = songs[direction];
+  return { emoji: INTERVAL_EMOJI[simple][direction], text: id > 12 ? t('plusOctave', { song }) : song };
 }
 
 // A well-known song that starts with this interval, preferring the same direction.

@@ -109,6 +109,12 @@
       </section>
 
       <section class="choices" data-i18n-aria="options" aria-label="Answers">
+        <nav class="segmented answer-switch" id="answer-switch" role="tablist" data-i18n-aria="answerWith" aria-label="How to answer" hidden>
+          <button role="tab" data-answer="keyboard" data-i18n="answerWithKeyboard">🎹 Play it</button>
+          <button role="tab" data-answer="list" data-i18n="answerWithList">☰ List</button>
+        </nav>
+        <p class="keyboard-help" id="keyboard-help" data-i18n="keyboardHelp" hidden></p>
+        <div class="answer-keyboard" id="answer-keyboard" hidden><div class="answer-keys" id="answer-keys"></div></div>
         <div class="option-grid" id="option-grid"></div>
         <button class="confirm-button" id="confirm-button" disabled>Submit</button>
       </section>

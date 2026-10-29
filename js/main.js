@@ -18,7 +18,7 @@ import {
 } from './games.js';
 import { practiceStats, practiceWeights, recordPracticeGame, weakSpots } from './practice.js';
 import { INSTRUMENTS, playGroups, playNotes, prefetch, setInstrument, setVolume } from './audio.js';
-import { DEFAULT_LANGUAGE, LANGUAGES, chordSymbol, getLanguage, noteName, optionName, pitchName, romanNumeral, setLanguage, songFor, t } from './i18n.js';
+import { DEFAULT_LANGUAGE, LANGUAGES, chordSymbol, getLanguage, noteName, optionFeel, optionName, pitchName, romanNumeral, setLanguage, songFor, t } from './i18n.js';
 import { FLAGS } from './flags.js';
 import { exportProgress, importProgress, storage } from './storage.js';
 import { track, trackAppUsage, trackFinishedGame } from './analytics.js';
@@ -30,7 +30,8 @@ const today = dayNumber();
 // Storage keys: the interval game keeps the original names, chords get a suffix.
 const keyFor = (name, type) => (type === 'intervals' ? name : `${name}:${type}`);
 
-const DEFAULT_SETTINGS = { hard: false, highContrast: false, volume: 0.8, instrument: 'piano' };
+// answerWith: in Intervals, 'keyboard' (tap the second note) or 'list' (pick a name).
+const DEFAULT_SETTINGS = { hard: false, highContrast: false, volume: 0.8, instrument: 'piano', answerWith: 'keyboard' };
 const DEFAULT_PRACTICE = {
   intervals: { pool: GAME_TYPES.intervals.dailyPool, direction: 'both', playback: 'melodic', adaptive: true },
   chords: { pool: GAME_TYPES.chords.dailyPool, direction: 'both', playback: 'harmonic', adaptive: true },
@@ -57,6 +58,8 @@ const practiceGames = {};
 let selected = null;
 let comparing = null;
 let justGuessed = false; // only the newest guess tile flips in
+let selectedKey = null; // key tapped on the answer keyboard (MIDI)
+let scrolledPuzzle = null; // answer keyboard already centered on this puzzle
 
 // Saved games
 
@@ -83,6 +86,7 @@ function loadGame() {
     game = { puzzle: puzzleForDay(type, day), guesses: record.guesses ?? [], hard: record.hard ?? null, listens: record.listens ?? 0 };
   }
   selected = null;
+  selectedKey = null;
   comparing = null;
 }
 
@@ -297,10 +301,16 @@ function gridOptions() {
   return all.filter((id) => shown.has(id));
 }
 
+// Under the friendly label, each answer shows its music theory name.
 function optionDetail(id) {
-  if (type === 'chords') return chordSymbol(id);
-  if (type === 'harmony') return t('degree', { n: id });
-  return `${id} ${t(id === 1 ? 'semitone' : 'semitones')}`;
+  if (type === 'chords') return `${optionName(type, id)} (${chordSymbol(id)})`;
+  if (type === 'harmony') return `${optionName(type, id)} · ${t('degree', { n: id })}`;
+  return optionName(type, id);
+}
+
+function optionLabel(id) {
+  const { emoji, text } = optionFeel(type, id, game.puzzle.ascending ?? true);
+  return `${emoji} ${text}`;
 }
 
 function render() {
@@ -337,7 +347,8 @@ function render() {
     const guess = guesses[i];
     if (guess === undefined) return '<li class="attempt empty"></li>';
     const reveal = justGuessed && i === guesses.length - 1 ? ' reveal' : '';
-    return `<li class="attempt ${evaluateGuess(puzzle, guess)}${reveal}">${optionName(type, guess)}</li>`;
+    const { emoji } = optionFeel(type, guess, puzzle.ascending ?? true);
+    return `<li class="attempt ${evaluateGuess(puzzle, guess)}${reveal}"><span>${emoji}</span>${optionName(type, guess)}</li>`;
   }).join('');
   justGuessed = false;
 
@@ -345,6 +356,15 @@ function render() {
   $('#hints').innerHTML = hints.map(({ key, family, quality }) => `<li>${t(key, { family: family && t('families')[family], quality: quality && t('qualities')[quality] })}</li>`).join('');
 
   renderGrid(over);
+
+  // Intervals can be answered by tapping the second note on a keyboard.
+  const keyboardMode = usesAnswerKeyboard() && !over;
+  $('#answer-switch').hidden = type !== 'intervals' || over;
+  for (const tab of document.querySelectorAll('[data-answer]')) tab.setAttribute('aria-selected', String(tab.dataset.answer === settings.answerWith));
+  $('#answer-keyboard').hidden = !keyboardMode;
+  $('#keyboard-help').hidden = !keyboardMode;
+  $('#option-grid').hidden = keyboardMode;
+  if (keyboardMode) renderAnswerKeyboard();
 
   const confirm = $('#confirm-button');
   confirm.hidden = over;
@@ -374,11 +394,111 @@ function renderGrid(over) {
     const id = parseOptionId(button.dataset.option);
     const guessed = game.guesses.includes(id);
     button.className = 'option';
-    button.innerHTML = `<strong>${optionName(type, id)}</strong><small>${optionDetail(id)}</small>`;
+    button.innerHTML = `<strong>${optionLabel(id)}</strong><small>${optionDetail(id)}</small>`;
     if (guessed) button.classList.add(evaluateGuess(game.puzzle, id));
     if (over && id === game.puzzle.answer) button.classList.add('answer');
     if (id === selected || (over && id === comparing)) button.classList.add('selected');
     button.disabled = !over && guessed;
+  }
+}
+
+// Answer keyboard
+
+function usesAnswerKeyboard() {
+  return type === 'intervals' && settings.answerWith === 'keyboard';
+}
+
+// Covers every allowed distance on both sides of the first note; keys whose
+// distance isn't an available answer (or was already guessed) still sound but
+// can't be picked.
+function renderAnswerKeyboard() {
+  const first = game.puzzle.notes[0];
+  const allowed = new Set(gridOptions());
+  const reach = Math.max(...allowed);
+  let low = first - reach;
+  let high = first + reach;
+  while (isBlackKey(low)) low -= 1;
+  while (isBlackKey(high)) high += 1;
+
+  const whites = [];
+  const blacks = [];
+  for (let midi = low; midi <= high; midi++) {
+    const distance = Math.abs(midi - first);
+    const classes = ['akey', isBlackKey(midi) ? 'black' : 'white'];
+    if (midi === first) classes.push('first');
+    else {
+      if (game.guesses.includes(distance)) classes.push(evaluateGuess(game.puzzle, distance));
+      else if (!allowed.has(distance)) classes.push('off');
+      const isSelected = selectedKey === null ? selected === distance : selectedKey === midi;
+      if (isSelected) classes.push('selected');
+    }
+    const key = { midi, classes, label: midi === first ? '1' : '' };
+    if (isBlackKey(midi)) blacks.push({ ...key, after: whites.length });
+    else whites.push(key);
+  }
+
+  const width = 100 / whites.length;
+  const keys = $('#answer-keys');
+  keys.style.minWidth = `${whites.length * 34}px`;
+  keys.innerHTML =
+    whites.map(({ midi, classes, label }) => `<button class="${classes.join(' ')}" data-midi="${midi}" aria-label="${midi === first ? '1' : ''}"><span>${label}</span></button>`).join('') +
+    blacks
+      .map(
+        ({ midi, classes, label, after }) =>
+          `<button class="${classes.join(' ')}" data-midi="${midi}" style="left: calc(${after * width}% - ${width * 0.3}%); width: ${width * 0.6}%"><span>${label}</span></button>`,
+      )
+      .join('');
+
+  // On narrow screens the keyboard scrolls: start centered on the first note.
+  const container = $('#answer-keyboard');
+  const puzzleKey = JSON.stringify(game.puzzle.notes);
+  if (scrolledPuzzle !== puzzleKey && container.scrollWidth > container.clientWidth) {
+    scrolledPuzzle = puzzleKey;
+    const firstKey = keys.querySelector('.first');
+    container.scrollLeft = firstKey.offsetLeft + firstKey.offsetWidth / 2 - container.clientWidth / 2;
+  }
+}
+
+function onAnswerKey(midi) {
+  playNotes([midi], 'harmonic');
+  const first = game.puzzle.notes[0];
+  const distance = Math.abs(midi - first);
+  if (status() !== 'playing' || midi === first) return;
+  if (!gridOptions().includes(distance) || game.guesses.includes(distance)) return;
+  selectedKey = midi;
+  selected = distance;
+  render();
+}
+
+// Arrow keys walk the answer keyboard one key at a time.
+function moveSelectedKey(step) {
+  const first = game.puzzle.notes[0];
+  const allowed = gridOptions();
+  let midi = selectedKey ?? first;
+  for (let i = 0; i < 48; i++) {
+    midi += step;
+    const distance = Math.abs(midi - first);
+    if (distance > Math.max(...allowed)) return;
+    if (distance && allowed.includes(distance) && !game.guesses.includes(distance)) {
+      onAnswerKey(midi);
+      return;
+    }
+  }
+}
+
+function setupAnswerKeyboard() {
+  $('#answer-keys').addEventListener('click', (event) => {
+    const key = event.target.closest('[data-midi]');
+    if (key) onAnswerKey(Number(key.dataset.midi));
+  });
+  for (const tab of document.querySelectorAll('[data-answer]')) {
+    tab.addEventListener('click', () => {
+      if (settings.answerWith === tab.dataset.answer) return;
+      saveSettings({ answerWith: tab.dataset.answer });
+      track(`answer-with-${tab.dataset.answer}`);
+      selectedKey = null;
+      render();
+    });
   }
 }
 
@@ -586,6 +706,7 @@ function onOptionClick(id) {
   }
   if (game.guesses.includes(id)) return;
   selected = selected === id ? null : id;
+  selectedKey = null;
   render();
 }
 
@@ -594,6 +715,7 @@ function submitGuess() {
   if (game.guesses.length === 0) game.hard = settings.hard;
   game.guesses = [...game.guesses, selected];
   selected = null;
+  selectedKey = null;
   justGuessed = true;
   saveGame();
 
@@ -896,6 +1018,9 @@ function setupKeyboardShortcuts() {
     } else if (/^[0-9]$/.test(event.key)) {
       const button = $('#option-grid').children[event.key === '0' ? 9 : Number(event.key) - 1];
       if (button && !button.disabled) button.click();
+    } else if (event.key.startsWith('Arrow') && status() === 'playing' && usesAnswerKeyboard()) {
+      event.preventDefault();
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') moveSelectedKey(event.key === 'ArrowLeft' ? -1 : 1);
     } else if (event.key.startsWith('Arrow') && status() === 'playing') {
       event.preventDefault();
       moveSelection(event.key);
@@ -933,6 +1058,7 @@ setupModals();
 setupSettings();
 setupPracticePanel();
 setupKeyboardShortcuts();
+setupAnswerKeyboard();
 $('#confirm-button').addEventListener('click', submitGuess);
 $('#share-button').addEventListener('click', share);
 $('#next-button').addEventListener('click', nextPracticePuzzle);

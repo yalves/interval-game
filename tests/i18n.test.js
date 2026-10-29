@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DEFAULT_LANGUAGE, LANGUAGES, STRINGS, chordSymbol, noteName, optionName, setLanguage, songFor, t } from '../js/i18n.js';
-import { CHORDS } from '../js/games.js';
+import { DEFAULT_LANGUAGE, LANGUAGES, STRINGS, chordSymbol, noteName, optionFeel, optionName, setLanguage, songFor, t } from '../js/i18n.js';
+import { CHORDS, DEGREES, INTERVALS } from '../js/games.js';
 import { FLAGS } from '../js/flags.js';
 
 function assertSameShape(actual, reference, path) {
@@ -30,7 +30,7 @@ test('translates text, placeholders, options and notes', () => {
   assert.equal(optionName('chords', 'diminished'), 'Diminuto');
   assert.equal(noteName({ letter: 0, accidental: 0, octave: 4 }), 'Dó4');
   assert.equal(chordSymbol('major7', { letter: 1, accidental: 0 }), 'D7M');
-  assert.equal(t('hintFamily', { family: t('families').majorThird }), 'É um acorde com terça maior.');
+  assert.equal(t('hintFamily', { family: t('families').majorThird }), 'É um acorde com terça maior: soa claro.');
   assert.match(t('answer', { ascending: false, name: 'Trítono', first: 'Fá♯4', second: 'Dó4' }), /trítono descendente/);
 
   setLanguage('en');
@@ -50,4 +50,25 @@ test('songFor prefers the matching direction and labels fallbacks', () => {
   assert.equal(songFor(5, false), 'Eine kleine Nachtmusik');
   assert.equal(songFor(6, false), 'The Simpsons (theme) (ascending)');
   assert.equal(songFor(14, true), null);
+});
+
+test('every answer has a friendly label and emoji in every language', () => {
+  for (const language of Object.keys(STRINGS)) {
+    setLanguage(language);
+    for (const ascending of [true, false]) {
+      for (const { id } of INTERVALS) {
+        const feel = optionFeel('intervals', id, ascending);
+        assert.ok(feel.emoji && feel.text, `${language} interval ${id}`);
+      }
+    }
+    for (const { id } of CHORDS) assert.ok(optionFeel('chords', id).emoji && optionFeel('chords', id).text, `${language} ${id}`);
+    for (const { id } of DEGREES) assert.ok(optionFeel('harmony', id).emoji && optionFeel('harmony', id).text, `${language} degree ${id}`);
+  }
+  setLanguage('en');
+  assert.deepEqual(optionFeel('intervals', 5), { emoji: '👰', text: 'Here Comes the Bride' });
+  assert.deepEqual(optionFeel('intervals', 5, false), { emoji: '🎻', text: 'Mozart Serenade' });
+  assert.deepEqual(optionFeel('intervals', 6, false), { emoji: '🍩', text: 'The Simpsons' });
+  assert.deepEqual(optionFeel('intervals', 19), { emoji: '⭐', text: 'Twinkle, Twinkle + an octave' });
+  setLanguage('pt-BR');
+  assert.deepEqual(optionFeel('chords', 'minor'), { emoji: '🌧️', text: 'Triste' });
 });
