@@ -4,8 +4,8 @@
 // Umami's free plan counts every event and every event property, so each
 // action sends at most a couple of short properties.
 
-import { MAX_ATTEMPTS, gameStatus } from './games.js';
-import { STRINGS } from './i18n.js';
+import { MAX_ATTEMPTS, gameStatus } from './games.js?v=0e8950d8';
+import { STRINGS } from './i18n.js?v=0e8950d8';
 
 export function track(name, data) {
   try {

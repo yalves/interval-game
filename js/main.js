@@ -15,13 +15,13 @@ import {
   shareText,
   soundFor,
   spellNotes,
-} from './games.js';
-import { practiceStats, practiceWeights, recordPracticeGame, weakSpots } from './practice.js';
-import { INSTRUMENTS, playGroups, playNotes, prefetch, setInstrument, setVolume } from './audio.js';
-import { DEFAULT_LANGUAGE, LANGUAGES, chordSymbol, getLanguage, noteName, optionFeel, optionName, pitchName, romanNumeral, setLanguage, songFor, t } from './i18n.js';
-import { FLAGS } from './flags.js';
-import { exportProgress, importProgress, storage } from './storage.js';
-import { track, trackAppUsage, trackFinishedGame } from './analytics.js';
+} from './games.js?v=0e8950d8';
+import { practiceStats, practiceWeights, recordPracticeGame, weakSpots } from './practice.js?v=0e8950d8';
+import { INSTRUMENTS, playGroups, playNotes, prefetch, setInstrument, setVolume } from './audio.js?v=0e8950d8';
+import { DEFAULT_LANGUAGE, LANGUAGES, chordSymbol, getLanguage, noteName, optionFeel, optionName, pitchName, romanNumeral, setLanguage, songFor, t } from './i18n.js?v=0e8950d8';
+import { FLAGS } from './flags.js?v=0e8950d8';
+import { exportProgress, importProgress, storage } from './storage.js?v=0e8950d8';
+import { track, trackAppUsage, trackFinishedGame } from './analytics.js?v=0e8950d8';
 
 const $ = (selector) => document.querySelector(selector);
 
