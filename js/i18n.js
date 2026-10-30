@@ -262,7 +262,7 @@ export const STRINGS = {
       <h3>Practice and archive</h3>
       <p>Switch to <strong>Practice</strong> for unlimited puzzles, choosing what to include. It focuses on the answers you miss most. Missed a day? Play it from the <strong>archive</strong> in the statistics.</p>
       <h3>No theory needed</h3>
-      <p>Each answer shows something familiar first (the song that starts with that jump, or how the chord feels) and its music theory name below. In <strong>Intervals</strong> you can also answer by tapping the second note on the keyboard (🎹 Play it).</p>
+      <p>Below each answer there's something familiar to help: the song that starts with that jump, or how the chord feels. In <strong>Intervals</strong> you can also answer by tapping the second note on the keyboard (🎹 Play it).</p>
       <p class="muted">Shortcuts: <kbd>Space</kbd> plays, <kbd>1</kbd>–<kbd>9</kbd> and <kbd>0</kbd> or the arrow keys pick an answer, <kbd>Enter</kbd> submits.</p>`,
   },
 
@@ -512,7 +512,7 @@ export const STRINGS = {
       <h3>Treino e arquivo</h3>
       <p>Mude para <strong>Treino</strong> para jogar sem limites, escolhendo o que incluir. Ele foca nas respostas que você mais erra. Perdeu um dia? Jogue pelo <strong>arquivo</strong> nas estatísticas.</p>
       <h3>Sem precisar de teoria</h3>
-      <p>Cada resposta mostra primeiro algo conhecido (a música que começa com aquele salto, ou a sensação do acorde) e, embaixo, o nome na teoria musical. Em <strong>Intervalos</strong> você também pode responder tocando a segunda nota no teclado (🎹 Tocar).</p>
+      <p>Embaixo de cada resposta há uma referência para ajudar: a música que começa com aquele salto, ou a sensação do acorde. Em <strong>Intervalos</strong> você também pode responder tocando a segunda nota no teclado (🎹 Tocar).</p>
       <p class="muted">Atalhos: <kbd>Espaço</kbd> toca, <kbd>1</kbd>–<kbd>9</kbd> e <kbd>0</kbd> ou as setas escolhem uma resposta, <kbd>Enter</kbd> confirma.</p>`,
   },
 };

@@ -301,14 +301,15 @@ function gridOptions() {
   return all.filter((id) => shown.has(id));
 }
 
-// Under the friendly label, each answer shows its music theory name.
-function optionDetail(id) {
+// Each answer shows its music name first, with a familiar reference below
+// (the song that starts with the interval, how the chord or degree feels).
+function optionTitle(id) {
   if (type === 'chords') return `${optionName(type, id)} (${chordSymbol(id)})`;
   if (type === 'harmony') return `${optionName(type, id)} · ${t('degree', { n: id })}`;
   return optionName(type, id);
 }
 
-function optionLabel(id) {
+function optionHint(id) {
   const { emoji, text } = optionFeel(type, id, game.puzzle.ascending ?? true);
   return `${emoji} ${text}`;
 }
@@ -394,7 +395,7 @@ function renderGrid(over) {
     const id = parseOptionId(button.dataset.option);
     const guessed = game.guesses.includes(id);
     button.className = 'option';
-    button.innerHTML = `<strong>${optionLabel(id)}</strong><small>${optionDetail(id)}</small>`;
+    button.innerHTML = `<strong>${optionTitle(id)}</strong><small>${optionHint(id)}</small>`;
     if (guessed) button.classList.add(evaluateGuess(game.puzzle, id));
     if (over && id === game.puzzle.answer) button.classList.add('answer');
     if (id === selected || (over && id === comparing)) button.classList.add('selected');
